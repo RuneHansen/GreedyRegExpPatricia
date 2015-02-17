@@ -5,17 +5,21 @@ bool isEmpty(std::string s) {
     return s.empty();
 }
 
+//interface for managing a list of strings
 struct simpleStruct {
     std::list<std::string> strings;
     void update((std::list<std::string> a) m(std::list<std::string> b));
     std::string split();
 }
 
+//Add, remove or replace strings from the list.
 void update((std::list<std::string> a) m(std::list<std::string> b)) {
     strings = m(strings);
-    strings.remove_if(isEmpty);
+    strings.remove_if(isEmpty); //mangler isEmpty ikke et input?
 }
 
+//Find longest prefix common to all strings in the list,
+//remove the prefix from all strings in the list and return the prefix.
 std::string split() {
     int size = strings.size();
     std::string ret = "";
@@ -42,10 +46,11 @@ std::string split() {
     if(count < 0) {
         return std::string("");
     }
-    strings[0].copy(ret, count, 0);
+
+    strings[0].copy(ret, count, 0); //er vi sikre på der er nok plads i ret?
     for(int i = 0; i < size; i++) {
         strings[i].erase(0, count);
     }
-    strings.remove_if(isEmpty);
+    strings.remove_if(isEmpty); //mangler isEmpty ikke et input?
     return ret;
 }
