@@ -7,18 +7,18 @@ bool isEmpty(std::string s) {
 
 struct simpleStruct {
   std::list<std::string> strings;
-  void* update((std::list<std::string> a) m(std::list<std::string> b));
+  void update((std::list<std::string> a) m(std::list<std::string> b));
   std::string split();
 }
 
-void* update((std::list<std::string> a) m(std::list<std::string> b)) {
+void update((std::list<std::string> a) m(std::list<std::string> b)) {
   strings = m(strings);
-  strings.remove_if((!isEmpty));
+  strings.remove_if(isEmpty);
 }
 
 
 
-void* split() {
+std::string split() {
   int size = strings.size();
   std::string ret = "";
   int count = 0;
@@ -47,6 +47,6 @@ void* split() {
   for(int i = 0; i < size; i++) {
     strings[i].erase(0, count);
   }
-  strings.remove_if((!isEmpty));
+  strings.remove_if(isEmpty);
   return ret;
 }
