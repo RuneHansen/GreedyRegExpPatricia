@@ -1,20 +1,22 @@
 #include <string>
 #include <list>
 
-
-struct simpleStruct {
-  std::list<char*> strings;
-  void* update((std::list<char*> a) m(std::list<char*> b));
-  char* split();
-}
-
-void* update((std::list<char*> a) m(std::list<std::tring> b)) {
-  strings = m(strings);
-}
-
 bool isEmpty(std::string s) {
   return s.empty();
 }
+
+struct simpleStruct {
+  std::list<std::string> strings;
+  void* update((std::list<std::string> a) m(std::list<std::string> b));
+  std::string split();
+}
+
+void* update((std::list<std::string> a) m(std::list<std::string> b)) {
+  strings = m(strings);
+  strings.remove_if((!isEmpty));
+}
+
+
 
 void* split() {
   int size = strings.size();
