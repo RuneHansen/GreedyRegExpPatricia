@@ -1,6 +1,9 @@
 #include <string>
 #include <list>
 
+bool isEmpty(std::string s) {
+  return s.empty();
+}
 
 struct simpleStruct {
   std::list<char*> strings;
@@ -10,11 +13,10 @@ struct simpleStruct {
 
 void* update((std::list<char*> a) m(std::list<std::tring> b)) {
   strings = m(strings);
+  strings.remove_if((!isEmpty));
 }
 
-bool isEmpty(std::string s) {
-  return s.empty();
-}
+
 
 void* split() {
   int size = strings.size();
