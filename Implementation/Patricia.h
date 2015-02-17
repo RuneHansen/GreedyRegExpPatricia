@@ -6,12 +6,12 @@ bool isEmpty(std::string s) {
 }
 
 struct simpleStruct {
-  std::list<char*> strings;
-  void* update((std::list<char*> a) m(std::list<char*> b));
-  char* split();
+  std::list<std::string> strings;
+  void* update((std::list<std::string> a) m(std::list<std::string> b));
+  std::string split();
 }
 
-void* update((std::list<char*> a) m(std::list<std::tring> b)) {
+void* update((std::list<std::string> a) m(std::list<std::string> b)) {
   strings = m(strings);
   strings.remove_if((!isEmpty));
 }
