@@ -12,6 +12,10 @@ void* update((std::list<char*> a) m(std::list<std::tring> b)) {
   strings = m(strings);
 }
 
+bool isEmpty(std::string s) {
+  return s.empty();
+}
+
 void* split() {
   int size = strings.size();
   std::string ret = "";
@@ -41,5 +45,6 @@ void* split() {
   for(int i = 0; i < size; i++) {
     strings[i].erase(0, count);
   }
+  strings.remove_if((!isEmpty));
   return ret;
 }
