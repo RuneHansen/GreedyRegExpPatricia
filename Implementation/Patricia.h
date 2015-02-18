@@ -17,9 +17,8 @@ bool isEmpty(std::string s) {
 
 
 void print(std::list<std::string> strings) {
-  int size = strings.size();
-  for(int i = 0; i < size; i++) {
-    cout << strings[i] << "\n";
+  for(std::list<std::string>::iterator it=strings.begin(); it != strings.end(); ++it) {
+    cout << *it << "\n";
   }
 }
 
@@ -32,14 +31,13 @@ void update(std::list<std::string>* strings, void (*m)(std::list<std::string>*))
 //Find longest prefix common to all strings in the list,
 //remove the prefix from all strings in the list and return the prefix.
 std::string split(std::list<std::string>* strings) {
-    int size = *(strings).size();
     std::string ret = "";
     int count = 0;
     int success = 1;
     char tmp = *(strings).front[0];
     for(int c = 0; c < 255; c++) {
-        for(int i = 0; i < size; i++) {
-            if(*(strings)[i][count] != '\0' && *(strings)[i][count] != tmp) {
+        for(std::list<std::string>::iterator it=*(strings).begin(); it != *(strings).end(); ++it) {
+            if(*it[count] != '\0' && *it[count] != tmp) {
                 success = 0;
                 break;
             }
@@ -58,9 +56,9 @@ std::string split(std::list<std::string>* strings) {
         return std::string("");
     }
 
-    *(strings)[0].copy(ret, count, 0); //er vi sikre på der er nok plads i ret?
-    for(int i = 0; i < size; i++) {
-        *(strings)[i].erase(0, count);
+    *(strings).front.copy(ret, count, 0); //er vi sikre på der er nok plads i ret?
+    for(std::list<std::string>::iterator it=*(strings).begin(); it != *(strings).end(); ++it {
+        *it.erase(0, count);
     }
     *(strings).remove_if(isEmpty); //mangler isEmpty ikke et input?
     return ret;
