@@ -1,5 +1,6 @@
 #include <string>
 #include <list>
+#include <iostream>
 
 bool isEmpty(std::string s) {
     return s.empty();
@@ -8,13 +9,21 @@ bool isEmpty(std::string s) {
 //interface for managing a list of strings
 struct simpleStruct {
     std::list<std::string> strings;
-    void update((std::list<std::string> a) m(std::list<std::string> b));
+    void update(void (*m)(std::list<std::string>*));
     std::string split();
+    void print();
+};
+
+void print() {
+  int size = strings.size();
+  for(int i = 0; i < size; i++) {
+    cout << strings[i] << "\n";
+  }
 }
 
 //Add, remove or replace strings from the list.
-void update((std::list<std::string> a) m(std::list<std::string> b)) {
-    strings = m(strings);
+void update(void (*m)(std::list<std::string>*)) {
+    strings = m(&strings);
     strings.remove_if(isEmpty); //mangler isEmpty ikke et input?
 }
 
