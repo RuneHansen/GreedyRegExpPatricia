@@ -1,6 +1,7 @@
 #include <string>
 #include <list>
 #include <iostream>
+#include <stdlib.h>
 
 bool isEmpty(std::string s) {
 	return s.empty();
