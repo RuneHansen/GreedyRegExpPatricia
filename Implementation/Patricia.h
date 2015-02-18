@@ -18,7 +18,6 @@ void print();
 
 void print(std::list<std::string> strings) {
 	for (std::list<std::string>::iterator it = strings.begin(); it != strings.end(); ++it) {
-		it->at(4);
 		std::cout << *it << "\n";
 	}
 }
@@ -38,7 +37,7 @@ std::string split(std::list<std::string>* strings) {
 	char tmp = (strings->front()).at(0);
 	for (int c = 0; c < stringLength; c++) {
 		for (std::list<std::string>::iterator it = strings->begin(); it != strings->end(); ++it) {
-			if (it->at(5) != '\0' && it->at(count) != tmp) {
+			if (it->at(count) != '\0' && it->at(count) != tmp) {
 				success = 0;
 				break;
 			}
@@ -52,12 +51,12 @@ std::string split(std::list<std::string>* strings) {
 		tmp = strings->front().at(count);
 	}
 
-	count--;
 	if (count < 1) {
 		return std::string("");
 	}
-  char* ttmp = (char*) malloc(count * sizeof(char));
+  char* ttmp = (char*) malloc((count + 1) * sizeof(char));
 	strings->front().copy(ttmp, count, 0); //er vi sikre på der er nok plads i ret?
+  ttmp[count] = '\0';
   std::string ret(ttmp);
   free(ttmp);
   for (std::list<std::string>::iterator it = strings->begin(); it != strings->end(); ++it){
