@@ -18,14 +18,14 @@ bool isEmpty(std::string s) {
 
 void print(std::list<std::string> strings) {
   for(std::list<std::string>::iterator it=strings.begin(); it != strings.end(); ++it) {
-    cout << *it << "\n";
+    std::cout << *it << "\n";
   }
 }
 
 //Add, remove or replace strings from the list.
 void update(std::list<std::string>* strings, void (*m)(std::list<std::string>*)) {
-    *(strings) = m(strings);
-    *(strings).remove_if(isEmpty); //mangler isEmpty ikke et input?
+    m(strings);
+    strings->remove_if(isEmpty); //mangler isEmpty ikke et input?
 }
 
 //Find longest prefix common to all strings in the list,
@@ -33,11 +33,12 @@ void update(std::list<std::string>* strings, void (*m)(std::list<std::string>*))
 std::string split(std::list<std::string>* strings) {
     std::string ret = "";
     int count = 0;
+    int stringLength = strings->front().size();
     int success = 1;
-    char tmp = *(strings).front[0];
-    for(int c = 0; c < 255; c++) {
-        for(std::list<std::string>::iterator it=*(strings).begin(); it != *(strings).end(); ++it) {
-            if(*it[count] != '\0' && *it[count] != tmp) {
+    char tmp = (strings->front()).at(0);
+    for(int c = 0; c < stringLength; c++) {
+        for(std::list<std::string>::iterator it=strings->begin(); it != strings->end(); ++it) {
+            if(((std::string*)it)->at(count) != '\0' && *it.at(count) != tmp) {
                 success = 0;
                 break;
             }
