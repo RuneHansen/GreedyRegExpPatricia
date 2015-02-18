@@ -49,7 +49,7 @@ std::string split(std::list<std::string>* strings) {
         }
 
         count++;
-        tmp = *(strings).front[count];
+        tmp = strings->front[count];
     }
 
     count--;
@@ -58,9 +58,9 @@ std::string split(std::list<std::string>* strings) {
     }
 
     *(strings).front.copy(ret, count, 0); //er vi sikre på der er nok plads i ret?
-    for(std::list<std::string>::iterator it=*(strings).begin(); it != *(strings).end(); ++it {
+    for(std::list<std::string>::iterator it=strings->begin(); it != strings->end(); ++it {
         *it.erase(0, count);
     }
-    *(strings).remove_if(isEmpty); //mangler isEmpty ikke et input?
+    strings->remove_if(isEmpty); //mangler isEmpty ikke et input?
     return ret;
 }
