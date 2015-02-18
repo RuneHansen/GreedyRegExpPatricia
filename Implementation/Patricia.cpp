@@ -19,9 +19,9 @@ void fillBasic(std::list<std::string>* a) {
 
 int main() {
   std::list<std::string> test1;
-  test1.update(&test1, fillBasic);
-  test1.update(&test1, func1);
-  test1.print(test1);
-  
+  update(&test1, fillBasic);
+  update(&test1, func1);
+  print(test1);
+
   return 0;
 }

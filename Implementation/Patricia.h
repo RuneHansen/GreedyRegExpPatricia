@@ -19,7 +19,7 @@ bool isEmpty(std::string s) {
 void print(std::list<std::string> strings) {
   int size = strings.size();
   for(int i = 0; i < size; i++) {
-    cout << strings[i] << "\n";
+    std::cout << strings[i] << "\n";
   }
 }
 
