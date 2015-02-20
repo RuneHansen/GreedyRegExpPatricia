@@ -34,14 +34,14 @@ void update(std::string* S, void(*m)(std::string* S)) {
 
 //Find longest prefix common to all strings in the list,
 //remove the prefix from all strings in the list and return the prefix.
-/*std::string split(std::list<std::string>* strings) {
+std::string split(std::string* S, int Qmax) {
 	int count = 0;
-	int stringLength = strings->front().size();
+	int stringLength = S[0].size(); //breaks at shortest string
 	int success = 1;
-	char tmp = (strings->front()).at(0);
+	char tmp = S[0].at(0);
 	for (int c = 0; c < stringLength; c++) {
-		for (std::list<std::string>::iterator it = strings->begin(); it != strings->end(); ++it) {
-			if (it->at(count) != '\0' && it->at(count) != tmp) {
+		for (int i = 0; i < Qmax; i++) {
+			if (S[i].at(count) != '\0' && S[i].at(count) != tmp) {
 				success = 0;
 				break;
 			}
@@ -52,20 +52,19 @@ void update(std::string* S, void(*m)(std::string* S)) {
 		}
 
 		count++;
-		tmp = strings->front().at(count);
+		tmp = S[0].at(count);
 	}
 
 	if (count < 1) {
 		return std::string("");
 	}
   char* ttmp = (char*) malloc((count + 1) * sizeof(char));
-	strings->front().copy(ttmp, count, 0); //er vi sikre på der er nok plads i ret?
+	S[0].copy(ttmp, count, 0);
   ttmp[count] = '\0';
   std::string ret(ttmp);
   free(ttmp);
-  for (std::list<std::string>::iterator it = strings->begin(); it != strings->end(); ++it){
-		it->erase(0, count);
+  for (int i = 0; i < Qmax; i++){
+		S[i].erase(0, count);
 	}
-	strings->remove_if(isEmpty); //mangler isEmpty ikke et input?
 	return ret;
-} */
+}
