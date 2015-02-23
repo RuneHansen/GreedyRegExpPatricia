@@ -23,7 +23,9 @@ void print();
 //print all possible paths with input read so far
 void print(std::string* S, int Qmax) {
   for (int i = 0; i < Qmax; i++) {
-    std::cout << S[i] << "\n";
+    if (S[i] != "na") {
+      std::cout << "S[" << i << "] = " << S[i] << "\n";
+    }
   }
 }
 

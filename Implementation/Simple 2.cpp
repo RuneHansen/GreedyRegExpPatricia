@@ -1,4 +1,4 @@
-#include "Simple.h"
+#include "Simple2.h"
 #include <string>
 #include <list>
 #include <iostream>
@@ -95,19 +95,33 @@ void fillBasic(std::list<std::string>* a) {
 	(*a).push_back(std::string(""));
 }
 
+void ma(std::string* S) {
+  for (i = 0; i < 5; i++) {
+    if (S[i] != "na") S[i] += "0";
+  }
+}
+
+void me(std::string* S) {
+  for (i = 0; i < 4; i++) {
+    S[i] = "na";
+  }
+}
+
+
 int main() {
-	std::list<std::string> test1;
-	update(&test1, fillBasic);
-  std::cout << "First\n";
-	print(test1);
-  std::cout << "Second:\n";
-	update(&test1, func1);
-	print(test1);
-  std::string res = split(&test1);
-  print(test1);
-  std::cout << "\nLast:\n" << res << std::endl;
-  char end;
-  std::cin >> end;
+  std::string S[5];
+  S[0] = "na";
+  S[1] = "";
+  S[2] = "0";
+  S[3] = "0";
+  S[4] = "1";
+
+  update(S,ma);
+  update(S,ma);
+  update(S,ma);
+  update(S,me);
+  
+  print(S,5);
 
 	return 0;
 }
