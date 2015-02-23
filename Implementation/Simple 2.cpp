@@ -1,4 +1,4 @@
-#include "Patricia.h"
+#include "Simple2.h"
 #include <string>
 #include <list>
 #include <iostream>
@@ -35,8 +35,8 @@ S4[2] = "na"
 S4[3] = "na"
 S4[4] = "na"
 
-std::string** ma = {{"na", "", "0", "0", "01"}, 
-                   {"na", "0", "0", "0", "01"}, 
+std::string** ma = {{"na", "", "0", "0", "01"},
+                   {"na", "0", "0", "0", "01"},
                    {"na", "", "0", "", "01"},
                    {"na", "", "0", "0", "01"},
                    {"na", "na", "na", "na", "na"}};
@@ -127,8 +127,8 @@ int main() {
   S[3] = "na";
   S[4] = "1";
 
-  std::string ma[5][5] = {{"na", "0", "00", "0", "01"}, 
-                          {"na", "0", "00", "0", "01"}, 
+  std::string ma[5][5] = {{"na", "0", "00", "0", "01"},
+                          {"na", "0", "00", "0", "01"},
                           {"na", "", "0", "", "1"},
                           {"na", "0", "00", "0", "01"},
                           {"na", "na", "na", "na", "na"}};
@@ -137,22 +137,22 @@ int main() {
                           {"na", "na", "na", "na", "na"},
                           {"na", "", "0", "na", "1"},
                           {"na", "na", "na", "na", "na"}};
-  
+
   std::cout << "Before:\n";
   print(S, 5);
-  std::cout << "One a:\n";                  
+  std::cout << "One a:\n";
   update2(S, 5, ma);
   print(S, 5);
   std::cout << "Two a:\n";
   update2(S, 5, ma);
-  
+
   print(S,5);
 
   std::cout << "Epsilon:\n";
   update2(S, 5, me);
-  
+
   print(S, 5);
-  
+
   char a;
   std::cin >> a;
 	return 0;

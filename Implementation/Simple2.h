@@ -16,8 +16,8 @@ void print();
 };*/
 
 //Q = is the set of states {1, 2, ... , Qmax-1, Qmax}
-//S = set of possible paths with the input read so far
-//m = represents reading a char, given the current S, returns the new S.
+//S[X] is the shortest path to state x; after reading the input
+//m[Y][X] = Is the shortest path from Y to X that reads a char
 //"na" = is a path that ends in a dead state
 
 //print all possible paths with input read so far
@@ -35,8 +35,8 @@ void update2(std::string* S, const int qMax, std::string m[5][5]) {
   std::string tmp2[5];
 
   for (int i = 0; i < qMax; i++) {
-    for (int i = 0; i < qMax; i++) {
-      tmp[i] = "na";
+    for (int j = 0; j < qMax; j++) {
+      tmp[j] = "na";
     }
     for (int j = 0; j < qMax; j++) {
       if (S[j] != "na" && m[j][i] != "na"){
