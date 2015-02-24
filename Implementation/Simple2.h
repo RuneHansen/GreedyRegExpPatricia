@@ -30,7 +30,29 @@ void print(std::string* S, int Qmax) {
 }
 
 //changes the current set and thus S (when a char is read)
-void update2(std::string* S, const int qMax, std::string m[5][5]) {
+void update2(std::string* S, const int Qmax, std::string m[5][5]) {
+
+
+  std::string newS[5];
+
+  for (int i = 0; i < Qmax; i++) {
+    newS[i] = "na";
+    for (int j = 0; j < Qmax; j++) {
+        //std::string newPath = S[j]+m[j][i];
+   // std::cout << "S[j] " << S[j] << " og " << m[j][i] << " og " << newS[i] << "\n";
+        if (S[j] != "na" && //Is there a path from j to i?
+            m[j][i] != "na" &&
+            (newS[i] == "na" || //Is it the shortest?
+             S[j].size()+m[j][i].size() < newS[i].size())) {
+          newS[i] = S[j]+m[j][i];
+        }
+    }
+
+  }
+    for (int i = 0; i < 5; i++) {
+        S[i] = newS[i];
+    }
+/*
   std::string tmp[5];
   std::string tmp2[5];
 
@@ -54,6 +76,7 @@ void update2(std::string* S, const int qMax, std::string m[5][5]) {
   for (int i = 0; i < qMax; i++) {
     S[i] = tmp2[i];
   }
+  */
   /*
   for (int i = 0; i < qMax; i++) {
     tmp = "na";
