@@ -2,6 +2,7 @@
 #include <list>
 #include <iostream>
 #include <stdlib.h>
+#include <new>
 
 bool isEmpty(std::string s) {
   return s.empty();
@@ -30,71 +31,34 @@ void print(std::string* S, int Qmax) {
 }
 
 //changes the current set and thus S (when a char is read)
-void update2(std::string* S, const int Qmax, std::string m[5][5]) {
+void update(std::string* S, const int Qmax, const std::string* m) {
+
+  std::string** newS = (std::string**) malloc(sizeof(std::string) * Qmax);
 
 
-  std::string newS[5];
+  for(int i = 0; i < Qmax; i++) {
+    std::string* tmp = new std::string();
+    newS[i] = tmp;
+  }
 
   for (int i = 0; i < Qmax; i++) {
-    newS[i] = "na";
+    (*newS[i]) = "na";
     for (int j = 0; j < Qmax; j++) {
-        //std::string newPath = S[j]+m[j][i];
-   // std::cout << "S[j] " << S[j] << " og " << m[j][i] << " og " << newS[i] << "\n";
         if (S[j] != "na" && //Is there a path from j to i?
-            m[j][i] != "na" &&
-            (newS[i] == "na" || //Is it the shortest?
-             S[j].size()+m[j][i].size() < newS[i].size())) {
-          newS[i] = S[j]+m[j][i];
+            m[j*Qmax+i] != "na" &&
+            ((*newS[i]) == "na" || //Is it the shortest?
+             S[j].size()+m[j*Qmax+i].size() < (*newS[i]).size())) {
+          (*newS[i]) = S[j]+m[j*Qmax+i];
         }
     }
-
   }
     for (int i = 0; i < 5; i++) {
-        S[i] = newS[i];
+        S[i] = (*newS[i]);
     }
-/*
-  std::string tmp[5];
-  std::string tmp2[5];
-
-  for (int i = 0; i < qMax; i++) {
-    for (int j = 0; j < qMax; j++) {
-      tmp[j] = "na";
-    }
-    for (int j = 0; j < qMax; j++) {
-      if (S[j] != "na" && m[j][i] != "na"){
-        tmp[j] = S[j] + m[j][i];
-      }
-    }
-    for (int j = 1; j < qMax; j++){
-      if ((tmp[j].size() < tmp[0].size() || tmp[0] == "na") && tmp[j] != "na"){
-        tmp[0] = tmp[j];
-      }
-    }
-    tmp2[i] = tmp[0];
+  for(int i = 0; i < Qmax; i++) {
+    delete newS[i];
   }
-
-  for (int i = 0; i < qMax; i++) {
-    S[i] = tmp2[i];
-  }
-  */
-  /*
-  for (int i = 0; i < qMax; i++) {
-    tmp = "na";
-    for (int j = 0; j < qMax; j++) {
-      if (m[j][i] != "na" && S[i] != "na" ) { //&& m[j][i] < tmp
-        //if (m[j][i] == "" && tmp != "na") { break; }
-        if ((tmp == "na") || m[j][i].size() < tmp.size() || m[j][i].size() == tmp.size() && m[j][i] < tmp)
-          tmp = S[j] + m[j][i];
-      }
-    }
-
-    if (tmp == "na") {
-      S[i] = "na";
-    }
-    else {
-      S[i] += tmp;
-    }
-  }*/
+  free(newS);
 }
 
 //Find longest prefix common to all strings in the list,

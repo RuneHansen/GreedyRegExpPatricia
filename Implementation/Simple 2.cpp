@@ -2,6 +2,7 @@
 #include <string>
 #include <list>
 #include <iostream>
+#include <sstream>
 /*
 =====  a*  =====
 
@@ -118,6 +119,24 @@ void me(std::string* S) {
   }
 }
 
+//S initial state, L is language string compared to the ms, qMax number of states, stream is input stream
+//Return is last string from S after stream empty
+std::string parse(std::string* S, std::string L, std::string* ms, int qMax, std::istream& stream) {
+  char input;
+  int lSize = L.size();
+  int nr;
+
+  while(stream.get(input)) {
+    for(int i = 0; i < lSize; i++) {
+      if(L[i] == input) {
+        nr = i;
+      }
+    }
+    update(S, qMax, ms + nr*qMax*qMax);
+  }
+
+  return S[qMax - 1];
+}
 
 int main() {
   std::string S[5];
@@ -127,32 +146,51 @@ int main() {
   S[3] = "na";
   S[4] = "1";
 
-  std::string ma[5][5] = {{"na", "0", "00", "0", "01"},
-                          {"na", "0", "00", "0", "01"},
-                          {"na", "", "0", "", "1"},
-                          {"na", "0", "00", "0", "01"},
-                          {"na", "na", "na", "na", "na"}};
-  std::string me[5][5] = {{"na", "", "0", "na", "1"},
-                          {"na", "na", "0", "na", "1"},
-                          {"na", "na", "na", "na", "na"},
-                          {"na", "", "0", "na", "1"},
-                          {"na", "na", "na", "na", "na"}};
+  std::string ma[25] = {"na", "0", "00", "0", "01",
+                          "na", "0", "00", "0", "01",
+                          "na", "", "0", "", "1",
+                          "na", "0", "00", "0", "01",
+                          "na", "na", "na", "na", "na"};
+  std::string me[25] = {"na", "", "0", "na", "1",
+                          "na", "na", "0", "na", "1",
+                          "na", "na", "na", "na", "na",
+                          "na", "", "0", "na", "1",
+                          "na", "na", "na", "na", "na"};
+
+  std::string test[50] = {"na", "0", "00", "0", "01",
+                          "na", "0", "00", "0", "01",
+                          "na", "", "0", "", "1",
+                          "na", "0", "00", "0", "01",
+                          "na", "na", "na", "na", "na",
+
+                          "na", "", "0", "na", "1",
+                          "na", "na", "0", "na", "1",
+                          "na", "na", "na", "na", "na",
+                          "na", "", "0", "na", "1",
+                          "na", "na", "na", "na", "na"};
+
 
   std::cout << "Before:\n";
   print(S, 5);
+  std::istringstream is;
+  is.str("aaaaae");
+  parse(S, "ae", test, 5, is);
+  std::cout << "Stream Done\n";
+  print(S, 5);
+  /*
   std::cout << "One a:\n";
-  update2(S, 5, ma);
+  update(S, 5, ma);
   print(S, 5);
   std::cout << "Two a:\n";
-  update2(S, 5, ma);
+  update(S, 5, ma);
 
   print(S,5);
 
   std::cout << "Epsilon:\n";
-  update2(S, 5, me);
+  update(S, 5, me);
 
   print(S, 5);
-
+  */
   char a;
   std::cin >> a;
 	return 0;
