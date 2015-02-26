@@ -9,10 +9,110 @@ bool isEmpty(std::string s) {
 }
 
 struct patNode = {
+  patNode* parent;
   std::string bitstring;
   patNode* left;
   patNode* right;
 };
+
+int longestCommon(std::string &s1, std::string &s2) {
+  int slength = s1.size() < s2.size() ? s1.size() : s2.size();
+  int count = 0;
+
+  for(int i = 0; i < slength; i++) {
+    if(s1[i] == s2[i])
+      count++;
+    else
+      break;
+  }
+  return count;
+}
+
+patNode* insertPat(patNode* node, std::string* s) {
+  if(*s == "") {
+    return node;
+  }
+
+  int child = node->parent->left == node ? 0 : 1;
+  int common = 0;
+  if(child) {
+    common = longestCommon(node->bitstring,
+                           node->parent->left->bitstring);
+    if(common > 0) {
+    std::string tmp0 = node->bitstring.substr(common);
+    //tilføj børn ombytning
+
+    node->parent->left->bitstring = node->parent->left->bitstring.substr(common);
+
+    patNode* newParent = (patNode*) malloc(sizeof(patNode));
+    patNode* newLeaf = (patNode*) malloc(sizeof(patNode));
+
+    newParent->bitstring = node->bitstring.substr(0, common)
+    }
+
+  }
+
+  longestCommon(node->bitstring)
+
+
+
+}
+
+/*
+patNode* insertPat(patNode* node, std::string* s) {
+  if(s == "") {
+    return node;
+  }
+  if(node->left == NULL && node->right == NULL) {
+    node->bitstring += *s;
+    return node;
+  }
+  if(s[0] == "0") {
+    if(node->left == NULL) {
+      node->left = (patNode*) malloc(sizeof(patNode));
+      node->left->bitstring = *s;
+      return node->left;
+    }
+      return insertChild(node->left, s);
+  }
+  if(node->right == NULL) {
+    node->right = (patNode*) malloc(sizeof(patNode));
+    node->right->bitstring = *s;
+    return node->right;
+  }
+
+  return insertChild(node->right, s);
+}
+
+patNode* insertChild(patNode* node, std::string s) {
+  int slength = node->bitstring.size() < s->size() ? node->bitstring.size() : s->size();
+  int count = 0;
+
+  for(int i = 0; i < slength; i++) {
+    if(s[i] == node->bitstring[i])
+      count++;
+    else
+      break;
+  }
+
+  if(count == node->bitstring.size()) {
+    return node;
+  }
+
+  std::string tmp0 = node->bitstring.substr(count);
+  std::string tmp1 = s.substr(count);
+
+  node->bitstring = node->bitstring.substr(0, count);
+
+  if(tmp0.size() == 0) {
+
+  }
+
+  if(tmp1[0] == "0") {
+    insert
+  }
+
+}*/
 
 //interface for managing a list of strings
 /*struct simpleStruct {
@@ -53,7 +153,7 @@ void update(std::string* S, const int Qmax, const std::string* m) {
         if (S[j] != "na" && //Is there a path from j to i?
             m[j*Qmax+i] != "na" &&
             ((*newS[i]) == "na" || //Is it the shortest?
-             S[j].size()+m[j*Qmax+i].size() < (*newS[i]).size())) {
+             S[j]+m[j*Qmax+i] < (*newS[i]))) {
           (*newS[i]) = S[j]+m[j*Qmax+i];
         }
     }
