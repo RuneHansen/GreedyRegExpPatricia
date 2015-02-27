@@ -31,6 +31,9 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Simple_aNFASimulator.cpp" />
+		<Unit filename="Simple_aNFASimulator.h" />
+		<Unit filename="TestSimpleI.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
