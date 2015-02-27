@@ -27,7 +27,7 @@ int main() {
   std::cout << "aNFA simulation:\n";
   std::cout << "input = " << test_input << "\n";
 
-// test input validity
+  // Test input validity
   for (int i = 0; i < test_input.length(); i++) {
     if (test_input[i] != 'a') {
         std::cout << "INVALID INPUT!\n";
@@ -38,19 +38,19 @@ int main() {
     }
   }
 
-  std::cout << "Initial state:\n"; // before simulation
+  std::cout << "Initial state:\n"; // Before simulation
   print(S, 5);
 
-  // convert input string to a stream
+  // Convert input string to a stream.
   std::istringstream is;
   is.str(test_input);
 
-  // run simulation
+  // Run simulation
   simulate(S, "a", ma, 5, is);
-  std::cout << "Finishing state:\n"; // after simulation
+  std::cout << "Finishing state:\n"; // After simulation
   print(S, 5);
 
-// Make sure the window does not close automatically.
+  // Make sure the window does not close automatically.
   std::cout << "\nEnter one character to finish the program.\n";
   char a;
   std::cin >> a;

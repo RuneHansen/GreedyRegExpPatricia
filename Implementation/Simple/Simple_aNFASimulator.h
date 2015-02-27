@@ -5,12 +5,12 @@
 #include <new>
 
 // This is the header for our simple aNFA simulator.
-// It currently holds update(), that does most of the work in the simulaiton process.
 
 // Q is the set of states {1, 2, ... , Qmax-1, Qmax}
 // S[X] is the smallest bitstring representing a path to state X, after the input read so far.
-// m[Y][X] = Is the shortest path from state Y to state X that reads a char
-// "na" = is a path that ends in a dead state.
+// m[Y][X] is the shortest path from state Y to state X that reads a char
+// ms ia an array of m arrays
+// stream is the input stream
 
 // Print all possible bitstring-paths with input read so far
 void print(std::string* S, int Qmax);
