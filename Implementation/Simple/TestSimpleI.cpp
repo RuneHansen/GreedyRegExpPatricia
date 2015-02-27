@@ -4,38 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-// ============== This is a simple implementation of aNFA simulation ==================
-// It is currently hardcoded to the aNFA generated from the regular expression a*.
-// You can set the input in Main(). The input must be valid for the regular expression a*.
-
-// Main() just defines the aNFA (a*), as the initial state S, and the relations ma and me. Then it calls simulate()
-
-// simulate call update() for each character in the input.
-// update() updates the initial state S. Update is defined in Simple_aNFASimulator.h
-
-// in the simple implementation bitstrings are represented by strings containing only ones and zeroes.
-
-// S[x] is a pointer to the smallest bitstring representing a path to the state x, using the input read so far.
-// L is the language, it is a string with one occurence of each character in the language.
-// qMax is total number of states in the aNFA.
-// stream is the input stream
-
-// Call update() for each character in the input stream.
-void simulate(std::string* S, std::string L, std::string* ms, int qMax, std::istream& stream) {
-  char input;
-  int lSize = L.size();
-  int nr;
-
-  while(stream.get(input)) {
-    for(int i = 0; i < lSize; i++) {
-      if(L[i] == input) {
-        nr = i;
-      }
-    }
-    update(S, qMax, ms + nr*qMax*qMax);
-  }
-}
-
 // Define aNFA (a*) and run simulation
 int main() {
   std::string S[5]; // The starting state
@@ -52,7 +20,7 @@ int main() {
                           "na", "0", "00", "0", "01",
                           "na", "na", "na", "na", "na"};
 
-// ===================== THIS IS WHERE YOU SET THE IMPUT ======================
+// ===================== THIS IS WHERE YOU SET THE INPUT ======================
   std::string test_input = std::string("aaa");
 // ============================================================================
 
