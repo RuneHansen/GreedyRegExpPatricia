@@ -12,6 +12,14 @@
 // ms ia an array of m arrays
 // stream is the input stream
 
+struct aNFAnode {
+  char input;
+  aNFAnode* left;
+  aNFAnode* right;
+};
+
+void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f);
+
 // Print all possible bitstring-paths with input read so far
 void print(std::string* S, int Qmax);
 

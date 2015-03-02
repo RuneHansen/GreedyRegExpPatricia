@@ -3,6 +3,10 @@
 #include <list>
 #include <iostream>
 #include <sstream>
+#include "parser/regex.h"
+#include "parser/lex.h"
+#include "parser/parser.h"
+
 
 // ============== This is a simple implementation of aNFA simulation ==================
 
@@ -16,6 +20,65 @@
 
 // In this simple implementation bitstrings are represented by strings containing only ones and zeroes.
 
+
+void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
+  if (E) {
+    switch(E->op) {
+    case BitC_RegexOp_Lit :
+      i->input = E->litChar;
+      i->left = f;
+      break;
+    case BitC_RegexOp_LitString :
+      aNFAnode* prev = (aNFAnode*) malloc (sizeof(aNFAnode));
+      i->left = prev;
+      prev->left = f;
+      prev->input = E->litString[0];
+      for(int i = 1; E->litString[i] != '\0'; i++) {
+        aNFAnode* cur = (aNFAnode*) malloc (sizeof(aNFAnode));
+        prev->left = cur;
+        cur->input = E->litString[i];
+        cur->left = f;
+        prev = cur;
+      }
+      break;
+    case BitC_RegexOp_Plus :
+      aNFAnode* s1 = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* s2 = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* f1 = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* f2 = (aNFAnode*) malloc (sizeof(aNFAnode));
+      i->left = s1;
+      i->right = s2;
+      f1->left = f;
+      f2->left = f;
+      aNFAgen(E->sub1->subs[0],s1,f1);
+      aNFAgen(E->sub1->subs[1],s2,f2);
+      break;
+    case BitC_RegexOp_Star :
+      aNFAnode* loop = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      i->left = loop;
+      loop->left = q;
+      loop->right = f;
+      aNFAgen(E->sub1,q,loop);
+      break;
+    case BitC_RegexOp_Concat2 :
+      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAgen(E->subs[0],i,q);
+      aNFAgen(E->subs[1],q,f);
+      break;
+    case BitC_RegexOp_Concat :
+      aNFAnode* prev = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAgen(E->subs[0],i,prev);
+      for(int i = 1; i < E->nsub; i++) {
+        aNFAnode* cur = (aNFAnode*) malloc (sizeof(aNFAnode));
+        aNFAgen(E->subs[i],prev,cur);
+        cur->left = f;
+        prev = cur;
+      }
+      break;
+    }
+  }
+}
 
 // Call update() for each character in the input stream.
 void simulate(std::string* S, std::string L, std::string* ms, int qMax, std::istream& stream) {
