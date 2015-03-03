@@ -173,12 +173,14 @@ std::string* buildMatrix(aNFAnode* E, int sizeN, char c) {
   return retMat;
 }
 
-std::string createString(aNFAnode* E, int target, int success, char c) {
+std::string createString(aNFAnode* E, int target, char c) {
+
+
   //Are we done?
-  if(success && E->nr == target) {
+  if(!c && E->nr == target) {
     return "";
   }
-  int comp = (!E->input || (E->input == c && !success)) ;
+  int comp = (!E->input || (E->input == c)) ;
   //got input but wrong progress
   if(!comp) {
     return "na";
@@ -188,16 +190,16 @@ std::string createString(aNFAnode* E, int target, int success, char c) {
     return "na";
   }
   //We havent read char, check if we read it
-  if(!success && E->right == NULL) {
+  if(c && E->right == NULL) {
     if(E->input == c) {
-      return createString(E->left, target, 1, c);
+      return createString(E->left, target, '\0');
     }
-      return createString(E->left, target, success, c);
+      return createString(E->left, target, c);
   }
   //A split path, return the best string
   if(E->right != NULL) {
-    std::string tmp =  createString(E->left, target, success, c);
-    std::string tmp2 = createString(E->right, target, success, c);
+    std::string tmp =  createString(E->left, target, c);
+    std::string tmp2 = createString(E->right, target, c);
     if(tmp == "na") {
       if(tmp2 == "na") {
         return tmp2;
@@ -207,7 +209,7 @@ std::string createString(aNFAnode* E, int target, int success, char c) {
     return "0" + tmp;
   }
   //Only one path, no required input
-  return createString(aNFAnode* E->left, target, success, c);
+  return createString(aNFAnode* E->left, target, c);
 }
 
 
