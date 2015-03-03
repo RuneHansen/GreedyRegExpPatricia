@@ -80,6 +80,19 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
   }
 }
 
+void printMatrix(std::string* matrix, int sizeQ) {
+  if(sizeQ < 10) {
+    for(int i = 0; i < sizeQ; i++) {
+      for(int j = 0; j < sizeQ; j++) {
+        std::cout << matrix[i*sizeQ + j] + " ";
+      }
+      std::cout << std::endl;
+    }
+    return;
+  }
+  std::cout << "Too big\n";
+}
+
 int addNr(aNFAnode* E, int nr) {
   if(E->nr == 0) {
     E->nr = nr++;
@@ -259,7 +272,7 @@ std::string split(std::string* S, int Qmax) {
 }
 
 // Print all possible bitstring-paths with input read so far
-void print(std::string* S, int Qmax) {
+void printPaths(std::string* S, int Qmax) {
   for (int i = 0; i < Qmax; i++) {
     if (S[i] != "na") {
       std::cout << "S[" << i << "] = " << S[i] << "\n";

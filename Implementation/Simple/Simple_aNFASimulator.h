@@ -23,10 +23,12 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f);
 
 int addNr(aNFAnode* E, int nr);
 
-std::string* buildMatrix(aNFAnode* E, int sizeN);
+std::string* buildMatrix(aNFAnode* E, int sizeN, char c);
+
+void printMatrix(std::string* matrix, int sizeQ);
 
 // Print all possible bitstring-paths with input read so far
-void print(std::string* S, int Qmax);
+void printPaths(std::string* S, int Qmax);
 
 // Simulates reading a char
 // Change S, that is the current set of paths reachable with the imput read so for.
