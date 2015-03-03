@@ -80,6 +80,82 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
   }
 }
 
+int addNr(aNFAnode* E, int nr) {
+  if(E->nr == 0) {
+    E->nr = nr++;
+    if(E->right != NULL) {
+      return addNr(E->right, addNr(E->left, nr));
+    }
+    if(E->left != NULL) {
+      return addNr(E->left, nr)
+    }
+  }
+  return nr;
+}
+
+aNFAnode* findN(aNFAnode* E, int n) {
+  if(E->nr != n) {
+    aNFAnode* ret = findN(aNFAnode* E->left, n);
+    if(ret->nr != n)
+      return findN(E->right, n);
+    return ret;
+  }
+  return E;
+}
+
+std::string* buildMatrix(aNFAnode* E, int sizeN, char c) {
+  std::string* retMat = (std::string*) malloc(sizeof(std::string) * sizeN * sizeN);
+  for(int i = 0; i < sizeN*sizeN; i++) {
+      retMat = new std::string("na");
+  }
+  aNFAnode* tmp;
+  for(int i = 0; i < sizeN; i++) {
+    tmp = findN(E, i);
+    for(int j = 0; j < sizeN; j++) {
+      retMat[i*sizeN + j] = createString(tmp, j, 0, c );
+    }
+  }
+  return retMat;
+}
+
+std::string createString(aNFAnode* E, int target, int success, char c) {
+  //Are we done?
+  if(success && E->nr == target) {
+    return "";
+  }
+  int comp = (!E->input || (E->input == c && !success)) ;
+  //got input but wrong progress
+  if(!comp) {
+    return "na";
+  }
+  //We are at end node, not target
+  if(E->left == NULL) {
+    return "na";
+  }
+  //We havent read char, check if we read it
+  if(!success && E->right == NULL) {
+    if(E->input == c) {
+      return createString(E->left, target, 1, c);
+    }
+      return createString(E->left, target, success, c);
+  }
+  //A split path, return the best string
+  if(E->right != NULL) {
+    std::string tmp =  createString(E->left, target, success, c);
+    std::string tmp2 = createString(E->right, target, success, c);
+    if(tmp == "na") {
+      if(tmp2 == "na") {
+        return tmp2;
+      }
+      return "1" + tmp2;
+    }
+    return "0" + tmp;
+  }
+  //Only one path, no required input
+  return createString(aNFAnode* E->left, target, success, c);
+}
+
+
 // Call update() for each character in the input stream.
 void simulate(std::string* S, std::string L, std::string* ms, int qMax, std::istream& stream) {
   char input;

@@ -16,9 +16,14 @@ struct aNFAnode {
   char input;
   aNFAnode* left;
   aNFAnode* right;
+  int nr = 0;
 };
 
 void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f);
+
+int addNr(aNFAnode* E, int nr);
+
+std::string* buildMatrix(aNFAnode* E, int sizeN);
 
 // Print all possible bitstring-paths with input read so far
 void print(std::string* S, int Qmax);
