@@ -84,16 +84,13 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
       }
       break;
     case BitC_RegexOp_Plus :
-      aNFAnode* s1 = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAnode* s2 = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAnode* f1 = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAnode* f2 = (aNFAnode*) malloc (sizeof(aNFAnode));
-      i->left = s1;
-      i->right = s2;
-      f1->left = f;
-      f2->left = f;
-      aNFAgen(E->sub1->subs[0],s1,f1);
-      aNFAgen(E->sub1->subs[1],s2,f2);
+      aNFAnode* loop = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* p = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      i->left = p
+      aNFAgen(E->left, p, loop);
+      loop->left = p;
+      loop->right = f;
       break;
     case BitC_RegexOp_Star :
       aNFAnode* loop = (aNFAnode*) malloc (sizeof(aNFAnode));
@@ -117,6 +114,43 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
         cur->left = f;
         prev = cur;
       }
+      break;
+    case BitC_RegexOp_Alt:
+      aNFAnode* s = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* s2;
+      i->left = q;
+      i->right = s;
+      aNFAgen(E->subs[0], q, f);
+
+      int n = E->nsub;
+      for(int i = 1; i < n; i++) {
+        s2 = (aNFAnode*) malloc (sizeof(aNFAnode));
+        q = (aNFAnode*) malloc (sizeof(aNFAnode));
+        s->left = q;
+        aNFAgen(E->subs[i], q, f);
+        s->right = s2;
+        s = s2;
+      }
+      break;
+    case BitC_RegexOp_Any:
+      i->left = f;
+      break;
+    case BitC_RegexOp_BeginText:
+    case BitC_RegexOp_Capture:
+      aNFAgen(E->sub1, i, f);
+      break;
+    case BitC_RegexOp_CharClass:
+    case BitC_RegexOp_EndText:
+    case BitC_RegexOp_Question:
+      i->right = f;
+      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      i->left = q;
+      aNFAgen(E->sub1, q, f);
+      break;
+    case BitC_RegexOp_Repeat:
+    case BitC_RegexOp_Unit:
+      i->left = f;
       break;
     }
   }
