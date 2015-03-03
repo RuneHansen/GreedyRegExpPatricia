@@ -20,6 +20,48 @@
 
 // In this simple implementation bitstrings are represented by strings containing only ones and zeroes.
 
+//returns the language for a regular expression given its aNFA,
+// as a string with one occurence of each character in the language.
+std::string findLanguage(aNFAnode* E) {
+  std::string language = new std::string("");
+  //get language from sub1
+  if (E->left) {
+    language = findLanguage(E->left);
+    if (E->right) {  //get language from sub2
+      std::string temp = findLanguage(E->right);
+      for (int i = 0; i < temp.length(); i++) {
+        int fail = 0;
+        for (int j = 0; j < language.length(); i++) {
+          if (temp[i] == language[j]) {
+            fail = 1;
+            break;
+          }
+        }
+        if(!fail) {
+          language += temp[i];
+        }
+      }
+    }
+  }
+
+  //add this char
+  if(E->input) {
+    int fail = 0;
+    for (int i = 0; i < language.length(); i++) {
+      if (language[i] == E->input) {
+        fail = 1;
+        break;
+      }
+    }
+    if (!fail) {
+      language += E->input;
+    }
+  }
+
+  //reutrn language
+  return language;
+}
+
 
 void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
   if (E) {
