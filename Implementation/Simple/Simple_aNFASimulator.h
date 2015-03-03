@@ -20,7 +20,7 @@ struct aNFAnode {
 };
 
 //Find the language of a regular expression given its aNFA
-std::string* findLanguage(aNFAnode* E);
+std::string findLanguage(aNFAnode* E);
 
 void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f);
 

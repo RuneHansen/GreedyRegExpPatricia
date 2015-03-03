@@ -27,14 +27,17 @@ int main() {
     BitC_YYparse(&regex);
     BitC_YYlex_destroy();
     aNFAgen(regex, &aNFAfirst, &aNFAlast);
-    matrixSize = addNr(&aNFAfirst, 0);
-    matrixSize--;
+    matrixSize = --addNr(&aNFAfirst, 0);
 
-    language = findLanguage(aNFAfirst);
+    language = findLanguage(&aNFAfirst);
     ma = (std::string*) malloc(matrixSize * matrixSize *
-                               language.size() * sizeof(string*));
+                               language.size() * sizeof(std::string*));
     for(int i = 0; i < language.size(); i++) {
       ma[i*matrixSize*matrixSize] = buildMatrix(&aNFAfirst, matrixSize, language[i]);
+    }
+    S = (string*) malloc(sizeof(std::string)*matrixSize);
+    for(int i = 0; i < matrixSize; i++) {
+      S = new std::string(createString(&aNFAnode, i, '\0'));
     }
 
     std::cout << "Your matrix\n";
@@ -42,6 +45,7 @@ int main() {
 
   } else {
     // The relational matrix for reading an "a"
+    matrixSize = 5;
     ma = (string*) malloc(sizeof(string*) * 25);
     ma = {"na", "0", "00", "0", "01",
                           "na", "0", "00", "0", "01",
@@ -52,6 +56,7 @@ int main() {
   // ===================== THIS IS WHERE YOU SET THE INPUT ======================
     test_input = std::string("aaa");
   // ============================================================================
+    S = (string*) malloc(sizeof(string) * 5);
     S[0] = "";
     S[1] = "";
     S[2] = "0";
