@@ -32,25 +32,42 @@ int main() {
     std::cin.getline(tmpI, 100);
     test_input = std::string(tmpI);
 
+    std::cout << "Parser nu\n";
+    
     BitC_YY_scan_string(regEx);
     BitC_YYparse(&regex);
     BitC_YYlex_destroy();
+    
+    std::cout << "Har Parset, generer aNFA\n";
+    
     aNFAgen(regex, &aNFAfirst, &aNFAlast);
     matrixSize = addNr(&aNFAfirst, 0) - 1;
 
+    std::cout << "Har genereret aNFA, finder sprog";
+    
     language = findLanguage(&aNFAfirst);
+    
+    std::cout << "Har fundet sprog " << language << ", laver plads til ma\n";
+    
     ma = (std::string*) malloc(matrixSize * matrixSize *
                                language.size() * sizeof(std::string*));
+                               
+    std::cout << "Har lavet plads, bygger matricer\n";
     for(int i = 0; i < language.size(); i++) {
       //ma[i*matrixSize*matrixSize] = buildMatrix(&aNFAfirst, matrixSize, language.at(i));
       buildMatrix(&aNFAfirst, matrixSize, language.at(i), ma + (i*matrixSize*matrixSize));
     }
+    
+    std::cout << "Matricer bygget, laver S\n";
+    
     S = (std::string*) malloc(sizeof(std::string*) * matrixSize);
     for(int i = 0; i < matrixSize; i++) {
       //std::string* tmp = new std::string();
       //tmp = &(createString(&aNFAnode, i, '\0'));
       S[i] = createString(&aNFAfirst, i, '\0');
     }
+    
+    std::cout << "S er skabt\n";
 
     std::cout << "Your matrix\n";
     printMatrix(ma, matrixSize);
