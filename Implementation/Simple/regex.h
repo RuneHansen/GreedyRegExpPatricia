@@ -137,7 +137,7 @@ extern BitC_Regex *BitC_MkRegex_Alt(BitC_Regex **sub, size_t nsub);
 extern BitC_Regex *BitC_MkRegex_Concat(BitC_Regex **sub, size_t nsub);
 extern BitC_Regex *BitC_MkRegex_Alt2(BitC_Regex *sub1, BitC_Regex *sub2);
 extern BitC_Regex *BitC_MkRegex_Concat2(BitC_Regex *sub1, BitC_Regex *sub2);
-extern BitC_Regex *BitC_MkRegex_CharClass(BitC_CharClass class);
+extern BitC_Regex *BitC_MkRegex_CharClass(BitC_CharClass clas);
 extern BitC_Regex *BitC_MkRegex_Any();
 extern BitC_Regex *BitC_MkRegex_BeginText();
 extern BitC_Regex *BitC_MkRegex_EndText();

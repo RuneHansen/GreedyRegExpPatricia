@@ -28,7 +28,7 @@
     if (count > 0)
     {
       int i = 0;
-      *out = malloc(sizeof(BitC_CharRange) * count);
+      *out = (BitC_CharRange*) malloc(sizeof(BitC_CharRange) * count);
       current = list;
       RangeList *tmp;
       do
@@ -129,9 +129,9 @@ regex4:
 ;
 
 range:
-  range1 range                   { $$ = malloc(sizeof(RangeList));
+  range1 range                   { $$ = (RangeList *) malloc(sizeof(RangeList));
                                    $$->value = $1; $$->next = $2; }
-| range1                         { $$ = malloc(sizeof(RangeList));
+| range1                         { $$ = (RangeList *) malloc(sizeof(RangeList));
                                    $$->value = $1; $$->next = NULL; }
 ;
 

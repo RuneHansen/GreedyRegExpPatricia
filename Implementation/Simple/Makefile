@@ -1,4 +1,4 @@
-EXECUTABLE=example
+EXECUTABLE=TestSimpleI
 
 .phony: all
 all: $(EXECUTABLE)
@@ -8,13 +8,13 @@ benchmarks: $(BENCHMARKS)
 
 # Configuration
 
-CC=gcc
+CC=g++
 AR=ar
 ARFLAGS=rsc
 YACC=bison
 LEX=flex
 CONF_CFLAGS=-O0
-CFLAGS=-std=c99 -c -I. -Wall -g -D_POSIX_SOURCE $(CONF_CFLAGS)
+CFLAGS=-c -I. -Wall -g -D_POSIX_SOURCE -fpermissive $(CONF_CFLAGS)
 LDFLAGS=$(CONF_LDFLAGS)
 
 
@@ -23,12 +23,14 @@ LDFLAGS=$(CONF_LDFLAGS)
 HEADERS=\
 	parser.h\
 	lex.h\
-	regex.h
+	regex.h\
+  Simple_aNFASimulator.h
 
 OBJECTS=\
 	obj/regex.o\
 	obj/parser.o\
-	obj/lex.o
+	obj/lex.o\
+  obj/Simple_aNFASimulator.o
 
 # Code generation
 
@@ -38,18 +40,18 @@ lex.c lex.h: lex.l
 parser.c parser.h: parser.y lex.h
 	$(YACC) --name-prefix="BitC_YY" $<
 
-obj/%.o: %.c $(HEADERS)
+obj/%.o: %.cpp $(HEADERS)
 	@mkdir -p $$(dirname $@)
-	$(CC) -o $@ $(CFLAGS) $*.c
+	$(CC) -o $@ $(CFLAGS) $*.cpp
 
 
 # Linking
 
-$(EXECUTABLE): obj/example.o $(OBJECTS)
+$(EXECUTABLE): obj/TestSimpleI.o $(OBJECTS)
 	@mkdir -p $$(dirname $@)
-	$(CC) $(LDFLAGS) -o $@ obj/example.o $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ obj/TestSimpleI.o $(OBJECTS)
 
 .phony: clean
 clean:
 	rm -rf obj
-	rm -f $(EXECUTABLE) parser.c lex.c parser.h lex.h
+	rm -f $(EXECUTABLE) parser.c lex.c parser.h lex.h 
