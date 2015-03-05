@@ -8,13 +8,13 @@ benchmarks: $(BENCHMARKS)
 
 # Configuration
 
-CC=gcc
+CC=g++
 AR=ar
 ARFLAGS=rsc
 YACC=bison
 LEX=flex
 CONF_CFLAGS=-O0
-CFLAGS=-std=c99 -c -I. -Wall -g -D_POSIX_SOURCE $(CONF_CFLAGS)
+CFLAGS=-c -I. -Wall -g -D_POSIX_SOURCE -fpermissive $(CONF_CFLAGS)
 LDFLAGS=$(CONF_LDFLAGS)
 
 

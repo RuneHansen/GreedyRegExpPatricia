@@ -3,9 +3,9 @@
 #include <list>
 #include <iostream>
 #include <sstream>
-#include "parser/regex.h"
-#include "parser/lex.h"
-#include "parser/parser.h"
+#include "regex.h"
+#include "lex.h"
+#include "parser.h"
 
 
 // ============== This is a simple implementation of aNFA simulation ==================
@@ -23,7 +23,7 @@
 //returns the language for a regular expression given its aNFA,
 // as a string with one occurence of each character in the language.
 std::string findLanguage(aNFAnode* E) {
-  std::string language = new std::string("");
+  std::string language("");
   //get language from sub1
   if (E->left) {
     language = findLanguage(E->left);
@@ -67,10 +67,13 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
   if (E) {
     switch(E->op) {
     case BitC_RegexOp_Lit :
+      {
       i->input = E->litChar;
       i->left = f;
       break;
+      }
     case BitC_RegexOp_LitString :
+      {
       aNFAnode* prev = (aNFAnode*) malloc (sizeof(aNFAnode));
       i->left = prev;
       prev->left = f;
@@ -83,16 +86,20 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
         prev = cur;
       }
       break;
+      }
     case BitC_RegexOp_Plus :
+      {
       aNFAnode* loop = (aNFAnode*) malloc (sizeof(aNFAnode));
       aNFAnode* p = (aNFAnode*) malloc (sizeof(aNFAnode));
       aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
-      i->left = p
-      aNFAgen(E->left, p, loop);
+      i->left = p;
+      aNFAgen(E->sub1, p, loop);
       loop->left = p;
       loop->right = f;
       break;
+      }
     case BitC_RegexOp_Star :
+      {
       aNFAnode* loop = (aNFAnode*) malloc (sizeof(aNFAnode));
       aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
       i->left = loop;
@@ -100,12 +107,16 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
       loop->right = f;
       aNFAgen(E->sub1,q,loop);
       break;
-    case BitC_RegexOp_Concat2 :
+      }
+    /*case BitC_RegexOp_Concat2 :
+      {
       aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
       aNFAgen(E->subs[0],i,q);
       aNFAgen(E->subs[1],q,f);
       break;
+      } */
     case BitC_RegexOp_Concat :
+      {
       aNFAnode* prev = (aNFAnode*) malloc (sizeof(aNFAnode));
       aNFAgen(E->subs[0],i,prev);
       for(int i = 1; i < E->nsub; i++) {
@@ -115,7 +126,9 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
         prev = cur;
       }
       break;
+      }
     case BitC_RegexOp_Alt:
+      {
       aNFAnode* s = (aNFAnode*) malloc (sizeof(aNFAnode));
       aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
       aNFAnode* s2;
@@ -133,25 +146,34 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
         s = s2;
       }
       break;
+      }
     case BitC_RegexOp_Any:
+      {
       i->left = f;
       break;
+      }
     case BitC_RegexOp_BeginText:
     case BitC_RegexOp_Capture:
+      {
       aNFAgen(E->sub1, i, f);
       break;
+      }
     case BitC_RegexOp_CharClass:
     case BitC_RegexOp_EndText:
     case BitC_RegexOp_Question:
+      {
       i->right = f;
       aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
       i->left = q;
       aNFAgen(E->sub1, q, f);
       break;
+      }
     case BitC_RegexOp_Repeat:
     case BitC_RegexOp_Unit:
+      {
       i->left = f;
       break;
+      }
     }
   }
 }
@@ -176,7 +198,7 @@ int addNr(aNFAnode* E, int nr) {
       return addNr(E->right, addNr(E->left, nr));
     }
     if(E->left != NULL) {
-      return addNr(E->left, nr)
+      return addNr(E->left, nr);
     }
   }
   return nr;
@@ -184,7 +206,7 @@ int addNr(aNFAnode* E, int nr) {
 
 aNFAnode* findN(aNFAnode* E, int n) {
   if(E->nr != n) {
-    aNFAnode* ret = findN(aNFAnode* E->left, n);
+    aNFAnode* ret = findN(E->left, n);
     if(ret->nr != n)
       return findN(E->right, n);
     return ret;
@@ -192,7 +214,7 @@ aNFAnode* findN(aNFAnode* E, int n) {
   return E;
 }
 
-std::string* buildMatrix(aNFAnode* E, int sizeN, char c,  std::string* matrix) {
+void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string* matrix) {
   std::string* retMat = matrix;
   /*
   std::string* retMat = (std::string*) malloc(sizeof(std::string) * sizeN * sizeN);
@@ -203,7 +225,7 @@ std::string* buildMatrix(aNFAnode* E, int sizeN, char c,  std::string* matrix) {
   for(int i = 0; i < sizeN; i++) {
     tmp = findN(E, i);
     for(int j = 0; j < sizeN; j++) {
-      retMat[i*sizeN + j] = createString(tmp, j, 0, c );
+      retMat[i*sizeN + j] = createString(tmp, j, c );
     }
   }
   //return retMat;
@@ -245,7 +267,7 @@ std::string createString(aNFAnode* E, int target, char c) {
     return "0" + tmp;
   }
   //Only one path, no required input
-  return createString(aNFAnode* E->left, target, c);
+  return createString(E->left, target, c);
 }
 
 

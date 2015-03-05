@@ -7,7 +7,7 @@
 static struct BitC_Regex *
 allocRegex(BitC_RegexOp op)
 {
-  struct BitC_Regex *regex = malloc(sizeof(struct BitC_Regex));
+  struct BitC_Regex *regex = (BitC_Regex*) malloc(sizeof(struct BitC_Regex));
   memset(regex, 0, sizeof(struct BitC_Regex));
   regex->op = op;
   return regex;
@@ -69,7 +69,7 @@ BitC_MkRegex_StringLit(char *str, bool isStatic)
   if (isStatic)
   {
     int n = strlen(str);
-    char *hStr = malloc(n+1);
+    char *hStr = (char*) malloc(n+1);
     strcpy(hStr, str);
     str = hStr;
   }
@@ -157,7 +157,7 @@ BitC_MkRegex_Concat(BitC_Regex **subs, size_t nsub)
 BitC_Regex *
 BitC_MkRegex_Alt2(BitC_Regex *re1, BitC_Regex *re2)
 {
-  BitC_Regex **subs = malloc(sizeof(BitC_Regex*[2]));
+  BitC_Regex **subs = (BitC_Regex**) malloc(sizeof(BitC_Regex*[2]));
   subs[0] = re1;
   subs[1] = re2;
   return BitC_MkRegex_Alt(subs, 2);
@@ -166,7 +166,7 @@ BitC_MkRegex_Alt2(BitC_Regex *re1, BitC_Regex *re2)
 BitC_Regex *
 BitC_MkRegex_Concat2(BitC_Regex *re1, BitC_Regex *re2)
 {
-  BitC_Regex **subs = malloc(sizeof(BitC_Regex*[2]));
+  BitC_Regex **subs = (BitC_Regex**) malloc(sizeof(BitC_Regex*[2]));
   subs[0] = re1;
   subs[1] = re2;
   return BitC_MkRegex_Concat(subs, 2);
@@ -199,16 +199,16 @@ BitC_MkCharRange(char from, char to)
 
 BitC_Regex *BitC_RegexCopy(BitC_Regex *regex)
 {
-  struct BitC_Regex *copy = malloc(sizeof(BitC_Regex));
+  struct BitC_Regex *copy = (BitC_Regex*) malloc(sizeof(BitC_Regex));
   memcpy(copy, regex, sizeof(BitC_Regex));
   switch (regex->op)
   {
   case BitC_RegexOp_LitString:
-    copy->litString = malloc(strlen(regex->litString));
+    copy->litString = (char *) malloc(strlen(regex->litString));
     strcpy(copy->litString, regex->litString);
     break;
   case BitC_RegexOp_CharClass:
-    copy->charClass.ranges = malloc(sizeof(BitC_CharRange)*regex->charClass.nranges);
+    copy->charClass.ranges = (BitC_CharRange*) malloc(sizeof(BitC_CharRange)*regex->charClass.nranges);
     memcpy(copy->charClass.ranges,
            regex->charClass.ranges,
            sizeof(BitC_CharRange)*regex->charClass.nranges);
@@ -220,7 +220,7 @@ BitC_Regex *BitC_RegexCopy(BitC_Regex *regex)
         regex->sub1 = BitC_RegexCopy(regex->sub1);
       else
       {
-        copy->subs = malloc(sizeof(BitC_Regex*)*regex->nsub);
+        copy->subs = (BitC_Regex**) malloc(sizeof(BitC_Regex*)*regex->nsub);
         for (int i = 0; i < regex->nsub; i++)
           copy->subs[i] = BitC_RegexCopy(regex->subs[i]);
       }
@@ -271,7 +271,7 @@ BitC_Regex *BitC_RegexSimplify(BitC_Regex *regex)
         left = sub;
       else
       {
-        BitC_Regex **subs = malloc(sizeof(BitC_Regex*[repeatMin]));
+        BitC_Regex **subs = (BitC_Regex**) malloc(sizeof(BitC_Regex*[repeatMin]));
         for (int i = 0; i < repeatMin - 1; i++)
           subs[i] = BitC_RegexCopy(sub);
         subs[repeatMin-1] = sub;
@@ -285,7 +285,7 @@ BitC_Regex *BitC_RegexSimplify(BitC_Regex *regex)
     }
     else if (repeatMax - repeatMin > 0)
     {
-      BitC_Regex **subs = malloc(sizeof(BitC_Regex*[repeatMax-repeatMin]));
+      BitC_Regex **subs = (BitC_Regex**) malloc(sizeof(BitC_Regex*[repeatMax-repeatMin]));
       for (int i = 0; i < repeatMax - repeatMin - 1; i++)
         subs[i] = BitC_MkRegex_Alt2(BitC_RegexCopy(sub), BitC_MkRegex_Unit());
       subs[repeatMax - repeatMin - 1] =
@@ -299,7 +299,9 @@ BitC_Regex *BitC_RegexSimplify(BitC_Regex *regex)
       return left;
     else
       return right;
+  }
   default:
+  {
     if (regex->nsub == 1)
       regex->sub1 = BitC_RegexSimplify(regex->sub1);
     else
