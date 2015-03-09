@@ -25,6 +25,7 @@
 std::string findLanguage(aNFAnode* E) {
   std::string language("");
   //get language from sub1
+  std::cout << "E " << E << " starter kald af selv\n";
   if (E->left) {
     language = findLanguage(E->left);
     if (E->right) {  //get language from sub2
@@ -43,6 +44,7 @@ std::string findLanguage(aNFAnode* E) {
       }
     }
   }
+  std::cout << "Kald af selv slut, for " << E << std::endl;
 
   //add this char
   if(E->input) {
@@ -62,50 +64,71 @@ std::string findLanguage(aNFAnode* E) {
   return language;
 }
 
+aNFAnode* aNFAnodeConstructor() {
+  aNFAnode* ret = (aNFAnode*) malloc(sizeof(aNFAnode));
+  ret->nr = 0;
+  ret->input = '\0';
+  ret->left = NULL;
+  ret->right = NULL;
+  return ret;
+}
 
-void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
+void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
   if (E) {
     switch(E->op) {
     case BitC_RegexOp_Lit :
       {
+      std::cout << "Laver lit\n";
       i->input = E->litChar;
       i->left = f;
+      if(language->find(i->input) == std::string::npos) {
+        *language += i->input;
+      }
       break;
       }
     case BitC_RegexOp_LitString :
       {
-      aNFAnode* prev = (aNFAnode*) malloc (sizeof(aNFAnode));
+      std::cout << "Laver litstring\n";
+      aNFAnode* prev = aNFAnodeConstructor();
       i->left = prev;
       prev->left = f;
       prev->input = E->litString[0];
+      if(language->find(prev->input) == std::string::npos) {
+        *language += prev->input;
+      }
       for(int i = 1; E->litString[i] != '\0'; i++) {
-        aNFAnode* cur = (aNFAnode*) malloc (sizeof(aNFAnode));
+        aNFAnode* cur = aNFAnodeConstructor();
         prev->left = cur;
         cur->input = E->litString[i];
         cur->left = f;
         prev = cur;
+        if(language->find(prev->input) == std::string::npos) {
+          *language += prev->input;
+        }
       }
       break;
       }
     case BitC_RegexOp_Plus :
       {
-      aNFAnode* loop = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAnode* p = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      std::cout << "Laver plus\n";
+      aNFAnode* loop = aNFAnodeConstructor();
+      aNFAnode* p = aNFAnodeConstructor();
+      aNFAnode* q = aNFAnodeConstructor();
       i->left = p;
-      aNFAgen(E->sub1, p, loop);
+      aNFAgen(E->sub1, p, loop, language);
       loop->left = p;
       loop->right = f;
       break;
       }
     case BitC_RegexOp_Star :
       {
-      aNFAnode* loop = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      std::cout << "Laver star\n";
+      aNFAnode* loop = aNFAnodeConstructor();
+      aNFAnode* q = aNFAnodeConstructor();
       i->left = loop;
       loop->left = q;
       loop->right = f;
-      aNFAgen(E->sub1,q,loop);
+      aNFAgen(E->sub1,q,loop, language);
       break;
       }
     /*case BitC_RegexOp_Concat2 :
@@ -116,73 +139,101 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f) {
       break;
       } */
     case BitC_RegexOp_Concat :
-      {
-      aNFAnode* prev = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAgen(E->subs[0],i,prev);
+    {
+      std::cout << "Laver concat\n";
+      aNFAnode* prev = aNFAnodeConstructor();
+      aNFAgen(E->subs[0],i,prev, language);
       for(int i = 1; i < E->nsub; i++) {
-        aNFAnode* cur = (aNFAnode*) malloc (sizeof(aNFAnode));
-        aNFAgen(E->subs[i],prev,cur);
+        aNFAnode* cur = aNFAnodeConstructor();
+        aNFAgen(E->subs[i],prev,cur, language);
         cur->left = f;
         prev = cur;
       }
       break;
-      }
+    }
     case BitC_RegexOp_Alt:
       {
-      aNFAnode* s = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      std::cout << "Laver alt\n";
+      aNFAnode* s = aNFAnodeConstructor();
+      aNFAnode* q = aNFAnodeConstructor();
       aNFAnode* s2;
       i->left = q;
       i->right = s;
-      aNFAgen(E->subs[0], q, f);
+      aNFAgen(E->subs[0], q, f, language);
 
       int n = E->nsub;
-      for(int i = 1; i < n; i++) {
-        s2 = (aNFAnode*) malloc (sizeof(aNFAnode));
-        q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      std::cout << "nsub number " << n << std::endl;
+      std::cout << "Nr's " << s->nr << " " << q->nr << " " << i->nr << " " << f->nr << "\n"; 
+      for(int j = 1; j < n; j++) {
+        s2 = aNFAnodeConstructor();
+        q = aNFAnodeConstructor();
         s->left = q;
-        aNFAgen(E->subs[i], q, f);
-        s->right = s2;
-        s = s2;
+        std::cout << "q's nr " << q->nr << std::endl;
+        aNFAgen(E->subs[j], q, f, language);
+        std::cout << "Nr2's" << q->nr << " " << s2->nr << std::endl;
+        if(j == n-1) {
+          free(s2);
+        } else {
+          s->right = s2;
+          s = s2;
+        }
       }
       break;
       }
     case BitC_RegexOp_Any:
       {
+      std::cout << "Laver any\n";
       i->left = f;
       break;
       }
     case BitC_RegexOp_BeginText:
+      std::cout << "Lavede BeginText\n";
     case BitC_RegexOp_Capture:
       {
-      aNFAgen(E->sub1, i, f);
+      std::cout << "Laver capture\n";
+      aNFAnode* q = aNFAnodeConstructor();
+      i->left = q;
+      aNFAgen(E->sub1, q, f, language);
       break;
       }
     case BitC_RegexOp_CharClass:
+      std::cout << "Lavede CharClass\n";
     case BitC_RegexOp_EndText:
+      std::cout << "Lavede EndText\n";
     case BitC_RegexOp_Question:
       {
+      std::cout << "Laver Question\n";
       i->right = f;
-      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
+      aNFAnode* q = aNFAnodeConstructor();
       i->left = q;
-      aNFAgen(E->sub1, q, f);
+      aNFAgen(E->sub1, q, f, language);
       break;
       }
     case BitC_RegexOp_Repeat:
+      std::cout << "Lavede Repeat\n";
     case BitC_RegexOp_Unit:
       {
+      std::cout << "Laver unit\n";
       i->left = f;
       break;
+      }
+    default:
+      {
+      std::cout << "Hit default, " << E->op << std::endl;
       }
     }
   }
 }
 
-void printMatrix(std::string* matrix, int sizeQ) {
-  if(sizeQ < 10) {
+void printMatrix(std::string** matrix, int sizeQ) {
+  if(sizeQ < 20) {
     for(int i = 0; i < sizeQ; i++) {
       for(int j = 0; j < sizeQ; j++) {
-        std::cout << matrix[i*sizeQ + j] + " ";
+        if(*matrix[i*sizeQ + j] == "") {
+          std::cout << "e ";
+        } else {
+          std::cout << *matrix[i*sizeQ + j] + " ";
+        }
       }
       std::cout << std::endl;
     }
@@ -192,8 +243,10 @@ void printMatrix(std::string* matrix, int sizeQ) {
 }
 
 int addNr(aNFAnode* E, int nr) {
+  std::cout << "E->nr = " << E->nr << std::endl;
   if(E->nr == 0) {
     E->nr = nr++;
+    std::cout << "Nr: " << nr << ", E->nr: " << E->nr << "\n";
     if(E->right != NULL) {
       return addNr(E->right, addNr(E->left, nr));
     }
@@ -205,28 +258,45 @@ int addNr(aNFAnode* E, int nr) {
 }
 
 aNFAnode* findN(aNFAnode* E, int n) {
-  if(E->nr != n) {
-    aNFAnode* ret = findN(E->left, n);
+  aNFAnode* ret;
+  if(E->nr == n) {
+    return E;
+  }
+  if(E->nr != n && E->right != NULL) {
+    ret = findN(E->right, n);
     if(ret->nr != n)
-      return findN(E->right, n);
+      return findN(E->left, n);
+    return ret;
+  }
+  if(E->nr != n && E->left != NULL) {
+    ret = findN(E->left, n);
     return ret;
   }
   return E;
 }
 
-void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string* matrix) {
-  std::string* retMat = matrix;
-  /*
-  std::string* retMat = (std::string*) malloc(sizeof(std::string) * sizeN * sizeN);
+void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string** matrix) {
+  std::string** retMat = matrix;
+  
+  //std::string* retMat = (std::string*) malloc(sizeof(std::string) * sizeN * sizeN);
   for(int i = 0; i < sizeN*sizeN; i++) {
-      retMat = new std::string("na");
-  } */
+      retMat[i] = new std::string("na");
+  } 
+  //std::cout << "Har kaldt new\n";
   aNFAnode* tmp;
   for(int i = 0; i < sizeN; i++) {
     tmp = findN(E, i);
-    for(int j = 0; j < sizeN; j++) {
-      retMat[i*sizeN + j] = createString(tmp, j, c );
+    if(i != tmp->nr) {
+      std::cout << "Wrong find " << i << " " << tmp->nr << std::endl;
     }
+    //if(i == 3) 
+    //  std::cout << "Find succeed\n";
+    for(int j = 0; j < sizeN; j++) {
+      *retMat[i*sizeN + j] = createString(tmp, j, c );
+    }
+    std::cout << "Done: " << i << std::endl;
+    std::cout << retMat[3*sizeN + 3] << std::endl;
+    
   }
   //return retMat;
 }
@@ -272,7 +342,7 @@ std::string createString(aNFAnode* E, int target, char c) {
 
 
 // Call update() for each character in the input stream.
-void simulate(std::string* S, std::string L, std::string* ms, int qMax, std::istream& stream) {
+void simulate(std::string** S, std::string L, std::string** ms, int qMax, std::istream& stream) {
   char input;
   int lSize = L.size();
   int nr;
@@ -283,13 +353,14 @@ void simulate(std::string* S, std::string L, std::string* ms, int qMax, std::ist
         nr = i;
       }
     }
-    update(S, qMax, ms + nr*qMax*qMax);
+    std::cout << "Updating\n";
+    update(S, qMax, ms + (nr*qMax*qMax));
   }
 }
 
 // Simulates reading a char
 // Change S, that is the current set of paths reachable with the imput read so for.
-void update(std::string* S, const int Qmax, const std::string* m) {
+void update(std::string** S, const int Qmax, std::string** m) {
 
   std::string** newS = (std::string**) malloc(sizeof(std::string) * Qmax);
 
@@ -302,16 +373,16 @@ void update(std::string* S, const int Qmax, const std::string* m) {
   for (int i = 0; i < Qmax; i++) {
     (*newS[i]) = "na";
     for (int j = 0; j < Qmax; j++) {
-        if (S[j] != "na" && //Is there a path from j to i?
-            m[j*Qmax+i] != "na" &&
+        if (*(S[j]) != "na" && //Is there a path from j to i?
+            (*m[j*Qmax+i]) != "na" &&
             ((*newS[i]) == "na" || //Is it the shortest?
-             S[j].size()+m[j*Qmax+i].size() < (*newS[i]).size())) {
-          (*newS[i]) = S[j]+m[j*Qmax+i];
+             S[j]->size() + m[j*Qmax+i]->size() < newS[i]->size())) {
+          (*newS[i]) = *(S[j])+(*m[j*Qmax+i]);
         }
     }
   }
-    for (int i = 0; i < 5; i++) {
-        S[i] = (*newS[i]);
+    for (int i = 0; i < Qmax; i++) {
+        *(S[i]) = (*newS[i]);
     }
   for(int i = 0; i < Qmax; i++) {
     delete newS[i];
@@ -321,22 +392,22 @@ void update(std::string* S, const int Qmax, const std::string* m) {
 
 // Find longest prefix common to all strings in the list,
 // remove the prefix from all strings in the list and return the prefix.
-std::string split(std::string* S, int Qmax) {
+std::string split(std::string** S, int Qmax) {
 
   // The index of the characters we are comparing
   int cInd = 0;
 
   //How many letters we should compare at most, just has to be longer than the shortest string
-  int stringLength = S[0].size();
+  int stringLength = S[0]->size();
 
   //Whether we should break the outer loop.
   int success = 1;
 
-  char tmp = S[0].at(0);
+  char tmp = S[0]->at(0);
   for (int c = 0; c < stringLength; c++) { // Each char
     for (int i = 0; i < Qmax; i++) { // in each string
       // Break at the end of the longest common prefix and/or the shortest string.
-      if (S[i].at(cInd) != '\0' && S[i].at(cInd) != tmp) {
+      if (S[i]->at(cInd) != '\0' && S[i]->at(cInd) != tmp) {
         success = 0;
         break;
       }
@@ -348,7 +419,7 @@ std::string split(std::string* S, int Qmax) {
     }
 
     cInd++;
-    tmp = S[0].at(cInd);
+    tmp = S[0]->at(cInd);
   }
 
   // cInd is now the index of the final character in the longest common prefix
@@ -358,7 +429,7 @@ std::string split(std::string* S, int Qmax) {
     prefix = std::string("");
   } else {
     char* ttmp = (char*)malloc((cInd + 1) * sizeof(char));
-    S[0].copy(ttmp, cInd, 0);
+    S[0]->copy(ttmp, cInd, 0);
     ttmp[cInd] = '\0';
     prefix = std::string(ttmp);
 
@@ -366,7 +437,7 @@ std::string split(std::string* S, int Qmax) {
     free(ttmp);
   }
   for (int i = 0; i < Qmax; i++){
-    S[i].erase(0, cInd);
+    S[i]->erase(0, cInd);
   }
 
   // Return the longest common prefix
@@ -374,10 +445,10 @@ std::string split(std::string* S, int Qmax) {
 }
 
 // Print all possible bitstring-paths with input read so far
-void printPaths(std::string* S, int Qmax) {
+void printPaths(std::string** S, int Qmax) {
   for (int i = 0; i < Qmax; i++) {
-    if (S[i] != "na") {
-      std::cout << "S[" << i << "] = " << S[i] << "\n";
+    if (*(S[i]) != "na") {
+      std::cout << "S[" << i << "] = " << *(S[i]) << "\n";
     }
   }
 }
