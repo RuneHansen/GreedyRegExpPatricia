@@ -68,6 +68,7 @@ aNFAnode* aNFAnodeConstructor() {
   aNFAnode* ret = (aNFAnode*) malloc(sizeof(aNFAnode));
   ret->nr = 0;
   ret->input = '\0';
+  ret->charClass.nranges = 0;
   ret->left = NULL;
   ret->right = NULL;
   return ret;
@@ -183,23 +184,46 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
     case BitC_RegexOp_Any:
       {
       std::cout << "Laver any\n";
+      i->charClass.nranges = (size_t) -1;
       i->left = f;
       break;
       }
     case BitC_RegexOp_BeginText:
       std::cout << "Lavede BeginText\n";
+      break;
     case BitC_RegexOp_Capture:
       {
       std::cout << "Laver capture\n";
-      aNFAnode* q = aNFAnodeConstructor();
-      i->left = q;
-      aNFAgen(E->sub1, q, f, language);
+
+      aNFAgen(E->sub1, i, f, language);
       break;
       }
     case BitC_RegexOp_CharClass:
-      std::cout << "Lavede CharClass\n";
+      {
+        std::cout << "Laver charClass\n";
+        for(int i = 0; i < E->charClass.nranges; i++) {
+          for(int j = (int) E->charClass.ranges[i].from; j <= (int) E->charClass.ranges[i].to; j++) {
+            if(language->find( (char) j ) == std::string::npos) {
+              *language += (char) j;
+            }
+          }
+        }
+        i->charClass.ranges = (BitC_CharRange*) malloc(sizeof(BitC_CharRange) * E->charClass.nranges);
+        for(int j = 0; j < E->charClass.nranges; j++) {
+          i->charClass.ranges[j].to = E->charClass.ranges[j].to;
+          i->charClass.ranges[j].from = E->charClass.ranges[j].from;
+        }
+        i->charClass.nranges = E->charClass.nranges;
+        i->charClass.inclusive = E->charClass.inclusive;
+        i->left = f;
+        break;
+      }
     case BitC_RegexOp_EndText:
-      std::cout << "Lavede EndText\n";
+      {
+      std::cout << "Lavede EndText " << E->nsub << std::endl;
+      aNFAgen(E->sub1, i, f, language);
+      break;
+      }
     case BitC_RegexOp_Question:
       {
       std::cout << "Laver Question\n";
@@ -211,6 +235,7 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       }
     case BitC_RegexOp_Repeat:
       std::cout << "Lavede Repeat\n";
+      break;
     case BitC_RegexOp_Unit:
       {
       std::cout << "Laver unit\n";
@@ -282,7 +307,7 @@ void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string** matrix) {
   for(int i = 0; i < sizeN*sizeN; i++) {
       retMat[i] = new std::string("na");
   } 
-  //std::cout << "Har kaldt new\n";
+  std::cout << "Har kaldt new\n";
   aNFAnode* tmp;
   for(int i = 0; i < sizeN; i++) {
     tmp = findN(E, i);
@@ -290,7 +315,7 @@ void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string** matrix) {
       std::cout << "Wrong find " << i << " " << tmp->nr << std::endl;
     }
     //if(i == 3) 
-    //  std::cout << "Find succeed\n";
+      std::cout << "Find succeed\n";
     for(int j = 0; j < sizeN; j++) {
       *retMat[i*sizeN + j] = createString(tmp, j, c );
     }
@@ -301,14 +326,42 @@ void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string** matrix) {
   //return retMat;
 }
 
-std::string createString(aNFAnode* E, int target, char c) {
+bool inCharClass(char c, BitC_CharClass n) {
+  //std::cout << "Tester inCharClass\n";
+  if(n.nranges == 0) {
+    return 0;
+  }
+  
+  if(n.nranges == (size_t) -1) {
+    return c != '\0';
+  }
+  
+  //std::cout << "Is charClass\n";
+  
+  int success = !n.inclusive;
+  for (int i = 0; i < n.nranges; i++) {
+    for (int j = (int) n.ranges[i].from; j <=  (int) n.ranges[i].to; j++) {
+      if((int) c == j) {
+        //std::cout << "Char in charClass, " << success << "\n";
+        return !success;
+      }
+    }
+  }
+  //std::cout << "Char not in charClass\n";
+  return success;
+}
 
+std::string createString(aNFAnode* E, int target, char c) {
+  //std::cout << "Called createString, target = " << target << " c = " << c <<"\n";
 
   //Are we done?
   if(!c && E->nr == target) {
     return "";
   }
-  int comp = (!E->input || (E->input == c)) ;
+  int comp = ((!E->input  || E->input == c) &&
+                E->charClass.nranges == 0 
+              || inCharClass(c, E->charClass)) ;
+  //std::cout << "Comp done\n";
   //got input but wrong progress
   if(!comp) {
     return "na";
@@ -319,7 +372,8 @@ std::string createString(aNFAnode* E, int target, char c) {
   }
   //We havent read char, check if we read it
   if(c && E->right == NULL) {
-    if(E->input == c) {
+    if(E->input == c || inCharClass(c, E->charClass)) {
+      //std::cout << "Found correct char\n";
       return createString(E->left, target, '\0');
     }
       return createString(E->left, target, c);
@@ -442,6 +496,28 @@ std::string split(std::string** S, int Qmax) {
 
   // Return the longest common prefix
   return prefix;
+}
+
+void freeMatrix(std::string** matrix, int mSize, int lSize) {
+  for(int l = 0; l < lSize; l++) {
+    for(int i = 0; i < mSize; i++) {
+      for(int j = 0; j < mSize; j++) {
+        delete matrix[l*mSize*mSize + i*mSize + j];
+      }
+    }
+  }
+  free(matrix);
+}
+
+void freeANFA(aNFAnode* node, int nr) {
+  aNFAnode** nodes = (aNFAnode**) malloc(sizeof(aNFAnode*) * nr);
+  for(int i = 0; i < nr; i++) {
+    nodes[i] = findN(node, i);
+  }
+  for(int i = 0; i < nr; i++) {
+    free(nodes[i]);
+  }
+  free(nodes);
 }
 
 // Print all possible bitstring-paths with input read so far

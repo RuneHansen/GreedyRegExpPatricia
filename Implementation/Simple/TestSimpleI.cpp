@@ -89,8 +89,28 @@ std::string* regExComplete(std::string regEx, std::string test_input) {
 
   // Run simulation
   simulate(S, language, ma, matrixSize, is);
+  
+  std::string* retS = new std::string();
+  *retS = *S[aNFAlast->nr];
+  
+  
+  
 
-  return S[aNFAlast->nr];
+  
+  std::cout << "Freeing Memory\n";
+  
+  
+  for(int i = 0; i < matrixSize; i++) {
+    delete S[i];
+  }
+  free(S);
+  std::cout << "S freed\n";
+  freeANFA(aNFAfirst, matrixSize);
+  std::cout << "aNFA freed\n";
+  freeMatrix(ma, matrixSize, language.size());
+  std::cout << "Matrices freed\n";
+  
+  return retS;
 }
 
 int main() {
