@@ -49,6 +49,7 @@ std::string split(std::string** S, int Qmax);
 
 void simulate(std::string** S, std::string L, std::string** ms, int qMax, std::istream& stream);
 
+aNFAnode* aNFAnodeConstructor();
 
 void freeMatrix(std::string** matrix, int mSize, int lSize);
 

@@ -113,11 +113,10 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       {
       std::cout << "Laver plus\n";
       aNFAnode* loop = aNFAnodeConstructor();
-      aNFAnode* p = aNFAnodeConstructor();
       aNFAnode* q = aNFAnodeConstructor();
-      i->left = p;
-      aNFAgen(E->sub1, p, loop, language);
-      loop->left = p;
+      i->left = q;
+      aNFAgen(E->sub1, q, loop, language);
+      loop->left = q;
       loop->right = f;
       break;
       }
@@ -163,15 +162,15 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       aNFAgen(E->subs[0], q, f, language);
 
       int n = E->nsub;
-      std::cout << "nsub number " << n << std::endl;
-      std::cout << "Nr's " << s->nr << " " << q->nr << " " << i->nr << " " << f->nr << "\n"; 
+      //std::cout << "nsub number " << n << std::endl;
+      //std::cout << "Nr's " << s->nr << " " << q->nr << " " << i->nr << " " << f->nr << "\n"; 
       for(int j = 1; j < n; j++) {
         s2 = aNFAnodeConstructor();
         q = aNFAnodeConstructor();
         s->left = q;
-        std::cout << "q's nr " << q->nr << std::endl;
+        //std::cout << "q's nr " << q->nr << std::endl;
         aNFAgen(E->subs[j], q, f, language);
-        std::cout << "Nr2's" << q->nr << " " << s2->nr << std::endl;
+        //std::cout << "Nr2's" << q->nr << " " << s2->nr << std::endl;
         if(j == n-1) {
           free(s2);
         } else {
@@ -268,10 +267,10 @@ void printMatrix(std::string** matrix, int sizeQ) {
 }
 
 int addNr(aNFAnode* E, int nr) {
-  std::cout << "E->nr = " << E->nr << std::endl;
+  //std::cout << "E->nr = " << E->nr << std::endl;
   if(E->nr == 0) {
     E->nr = nr++;
-    std::cout << "Nr: " << nr << ", E->nr: " << E->nr << "\n";
+    //std::cout << "Nr: " << nr << ", E->nr: " << E->nr << "\n";
     if(E->right != NULL) {
       return addNr(E->right, addNr(E->left, nr));
     }
@@ -282,19 +281,36 @@ int addNr(aNFAnode* E, int nr) {
   return nr;
 }
 
-aNFAnode* findN(aNFAnode* E, int n) {
+aNFAnode* findN(aNFAnode* E, int n, int d) {
   aNFAnode* ret;
+  //std::cout << "Looking for " << n << std::endl;
+  //std::cout << "Currently in " << E->nr << std::endl;
+
   if(E->nr == n) {
+    //std::cout << "Found it\n";
     return E;
   }
+  if(d == 0) {
+    return E;
+  }
+  
   if(E->nr != n && E->right != NULL) {
-    ret = findN(E->right, n);
-    if(ret->nr != n)
-      return findN(E->left, n);
-    return ret;
+    if(rand() % 2) {
+      //std::cout << "Took zero\n";
+      ret = findN(E->right, n, d-1);
+      if(ret->nr != n)
+        return findN(E->left, n, d-1);
+      return ret;
+    } else {
+      //std::cout << "Took one\n";
+      ret = findN(E->left, n, d-1);
+      if(ret->nr != n)
+        return findN(E->right, n, d-1);
+      return ret;    
+    }
   }
   if(E->nr != n && E->left != NULL) {
-    ret = findN(E->left, n);
+    ret = findN(E->left, n, d-1);
     return ret;
   }
   return E;
@@ -307,20 +323,23 @@ void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string** matrix) {
   for(int i = 0; i < sizeN*sizeN; i++) {
       retMat[i] = new std::string("na");
   } 
-  std::cout << "Har kaldt new\n";
+  //std::cout << "Har kaldt new\n";
   aNFAnode* tmp;
   for(int i = 0; i < sizeN; i++) {
-    tmp = findN(E, i);
+    std::cout << i << ", " << E->nr << std::endl;
+    tmp = findN(E, i, sizeN + 1);
+    
+    //std::cout << "Found i " << i << std::endl;
     if(i != tmp->nr) {
       std::cout << "Wrong find " << i << " " << tmp->nr << std::endl;
     }
     //if(i == 3) 
-      std::cout << "Find succeed\n";
+      //std::cout << "Find succeed\n";
     for(int j = 0; j < sizeN; j++) {
       *retMat[i*sizeN + j] = createString(tmp, j, c );
     }
-    std::cout << "Done: " << i << std::endl;
-    std::cout << retMat[3*sizeN + 3] << std::endl;
+    //std::cout << "Done: " << i << std::endl;
+    //std::cout << retMat[3*sizeN + 3] << std::endl;
     
   }
   //return retMat;
@@ -334,6 +353,10 @@ bool inCharClass(char c, BitC_CharClass n) {
   
   if(n.nranges == (size_t) -1) {
     return c != '\0';
+  }
+  
+  if(c == '\0') {
+    return 0;
   }
   
   //std::cout << "Is charClass\n";
@@ -512,7 +535,7 @@ void freeMatrix(std::string** matrix, int mSize, int lSize) {
 void freeANFA(aNFAnode* node, int nr) {
   aNFAnode** nodes = (aNFAnode**) malloc(sizeof(aNFAnode*) * nr);
   for(int i = 0; i < nr; i++) {
-    nodes[i] = findN(node, i);
+    nodes[i] = findN(node, i, nr + 1);
   }
   for(int i = 0; i < nr; i++) {
     free(nodes[i]);
