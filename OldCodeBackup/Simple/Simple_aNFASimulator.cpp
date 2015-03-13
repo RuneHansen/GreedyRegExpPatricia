@@ -6,6 +6,7 @@
 #include "regex.h"
 #include "lex.h"
 #include "parser.h"
+#include "aNFAgen.cpp"
 
 
 // ============== This is a simple implementation of aNFA simulation ==================
@@ -64,166 +65,6 @@ std::string findLanguage(aNFAnode* E) {
   return language;
 }
 
-aNFAnode* aNFAnodeConstructor() {
-  aNFAnode* ret = (aNFAnode*) malloc(sizeof(aNFAnode));
-  ret->nr = 0;
-  ret->input = '\0';
-  ret->left = NULL;
-  ret->right = NULL;
-  return ret;
-}
-
-void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
-  if (E) {
-    switch(E->op) {
-    case BitC_RegexOp_Lit :
-      {
-      std::cout << "Laver lit\n";
-      i->input = E->litChar;
-      i->left = f;
-      if(language->find(i->input) == std::string::npos) {
-        *language += i->input;
-      }
-      break;
-      }
-    case BitC_RegexOp_LitString :
-      {
-      std::cout << "Laver litstring\n";
-      aNFAnode* prev = aNFAnodeConstructor();
-      i->left = prev;
-      prev->left = f;
-      prev->input = E->litString[0];
-      if(language->find(prev->input) == std::string::npos) {
-        *language += prev->input;
-      }
-      for(int i = 1; E->litString[i] != '\0'; i++) {
-        aNFAnode* cur = aNFAnodeConstructor();
-        prev->left = cur;
-        cur->input = E->litString[i];
-        cur->left = f;
-        prev = cur;
-        if(language->find(prev->input) == std::string::npos) {
-          *language += prev->input;
-        }
-      }
-      break;
-      }
-    case BitC_RegexOp_Plus :
-      {
-      std::cout << "Laver plus\n";
-      aNFAnode* loop = aNFAnodeConstructor();
-      aNFAnode* p = aNFAnodeConstructor();
-      aNFAnode* q = aNFAnodeConstructor();
-      i->left = p;
-      aNFAgen(E->sub1, p, loop, language);
-      loop->left = p;
-      loop->right = f;
-      break;
-      }
-    case BitC_RegexOp_Star :
-      {
-      std::cout << "Laver star\n";
-      aNFAnode* loop = aNFAnodeConstructor();
-      aNFAnode* q = aNFAnodeConstructor();
-      i->left = loop;
-      loop->left = q;
-      loop->right = f;
-      aNFAgen(E->sub1,q,loop, language);
-      break;
-      }
-    /*case BitC_RegexOp_Concat2 :
-      {
-      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAgen(E->subs[0],i,q);
-      aNFAgen(E->subs[1],q,f);
-      break;
-      } */
-    case BitC_RegexOp_Concat :
-    {
-      std::cout << "Laver concat\n";
-      aNFAnode* prev = aNFAnodeConstructor();
-      aNFAgen(E->subs[0],i,prev, language);
-      for(int i = 1; i < E->nsub; i++) {
-        aNFAnode* cur = aNFAnodeConstructor();
-        aNFAgen(E->subs[i],prev,cur, language);
-        cur->left = f;
-        prev = cur;
-      }
-      break;
-    }
-    case BitC_RegexOp_Alt:
-      {
-      std::cout << "Laver alt\n";
-      aNFAnode* s = aNFAnodeConstructor();
-      aNFAnode* q = aNFAnodeConstructor();
-      aNFAnode* s2;
-      i->left = q;
-      i->right = s;
-      aNFAgen(E->subs[0], q, f, language);
-
-      int n = E->nsub;
-      std::cout << "nsub number " << n << std::endl;
-      std::cout << "Nr's " << s->nr << " " << q->nr << " " << i->nr << " " << f->nr << "\n"; 
-      for(int j = 1; j < n; j++) {
-        s2 = aNFAnodeConstructor();
-        q = aNFAnodeConstructor();
-        s->left = q;
-        std::cout << "q's nr " << q->nr << std::endl;
-        aNFAgen(E->subs[j], q, f, language);
-        std::cout << "Nr2's" << q->nr << " " << s2->nr << std::endl;
-        if(j == n-1) {
-          free(s2);
-        } else {
-          s->right = s2;
-          s = s2;
-        }
-      }
-      break;
-      }
-    case BitC_RegexOp_Any:
-      {
-      std::cout << "Laver any\n";
-      i->left = f;
-      break;
-      }
-    case BitC_RegexOp_BeginText:
-      std::cout << "Lavede BeginText\n";
-    case BitC_RegexOp_Capture:
-      {
-      std::cout << "Laver capture\n";
-      aNFAnode* q = aNFAnodeConstructor();
-      i->left = q;
-      aNFAgen(E->sub1, q, f, language);
-      break;
-      }
-    case BitC_RegexOp_CharClass:
-      std::cout << "Lavede CharClass\n";
-    case BitC_RegexOp_EndText:
-      std::cout << "Lavede EndText\n";
-    case BitC_RegexOp_Question:
-      {
-      std::cout << "Laver Question\n";
-      i->right = f;
-      aNFAnode* q = aNFAnodeConstructor();
-      i->left = q;
-      aNFAgen(E->sub1, q, f, language);
-      break;
-      }
-    case BitC_RegexOp_Repeat:
-      std::cout << "Lavede Repeat\n";
-    case BitC_RegexOp_Unit:
-      {
-      std::cout << "Laver unit\n";
-      i->left = f;
-      break;
-      }
-    default:
-      {
-      std::cout << "Hit default, " << E->op << std::endl;
-      }
-    }
-  }
-}
 
 void printMatrix(std::string** matrix, int sizeQ) {
   if(sizeQ < 20) {
@@ -243,10 +84,10 @@ void printMatrix(std::string** matrix, int sizeQ) {
 }
 
 int addNr(aNFAnode* E, int nr) {
-  std::cout << "E->nr = " << E->nr << std::endl;
+  //std::cout << "E->nr = " << E->nr << std::endl;
   if(E->nr == 0) {
     E->nr = nr++;
-    std::cout << "Nr: " << nr << ", E->nr: " << E->nr << "\n";
+    //std::cout << "Nr: " << nr << ", E->nr: " << E->nr << "\n";
     if(E->right != NULL) {
       return addNr(E->right, addNr(E->left, nr));
     }
@@ -257,19 +98,36 @@ int addNr(aNFAnode* E, int nr) {
   return nr;
 }
 
-aNFAnode* findN(aNFAnode* E, int n) {
+aNFAnode* findN(aNFAnode* E, int n, int d) {
   aNFAnode* ret;
+  //std::cout << "Looking for " << n << std::endl;
+  //std::cout << "Currently in " << E->nr << std::endl;
+
   if(E->nr == n) {
+    //std::cout << "Found it\n";
     return E;
   }
+  if(d == 0) {
+    return E;
+  }
+
   if(E->nr != n && E->right != NULL) {
-    ret = findN(E->right, n);
-    if(ret->nr != n)
-      return findN(E->left, n);
-    return ret;
+    if(rand() % 2) {
+      //std::cout << "Took zero\n";
+      ret = findN(E->right, n, d-1);
+      if(ret->nr != n)
+        return findN(E->left, n, d-1);
+      return ret;
+    } else {
+      //std::cout << "Took one\n";
+      ret = findN(E->left, n, d-1);
+      if(ret->nr != n)
+        return findN(E->right, n, d-1);
+      return ret;
+    }
   }
   if(E->nr != n && E->left != NULL) {
-    ret = findN(E->left, n);
+    ret = findN(E->left, n, d-1);
     return ret;
   }
   return E;
@@ -277,38 +135,73 @@ aNFAnode* findN(aNFAnode* E, int n) {
 
 void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string** matrix) {
   std::string** retMat = matrix;
-  
+
   //std::string* retMat = (std::string*) malloc(sizeof(std::string) * sizeN * sizeN);
   for(int i = 0; i < sizeN*sizeN; i++) {
       retMat[i] = new std::string("na");
-  } 
+  }
   //std::cout << "Har kaldt new\n";
   aNFAnode* tmp;
   for(int i = 0; i < sizeN; i++) {
-    tmp = findN(E, i);
+    std::cout << i << ", " << E->nr << std::endl;
+    tmp = findN(E, i, sizeN + 1);
+
+    //std::cout << "Found i " << i << std::endl;
     if(i != tmp->nr) {
       std::cout << "Wrong find " << i << " " << tmp->nr << std::endl;
     }
-    //if(i == 3) 
-    //  std::cout << "Find succeed\n";
+    //if(i == 3)
+      //std::cout << "Find succeed\n";
     for(int j = 0; j < sizeN; j++) {
       *retMat[i*sizeN + j] = createString(tmp, j, c );
     }
-    std::cout << "Done: " << i << std::endl;
-    std::cout << retMat[3*sizeN + 3] << std::endl;
-    
+    //std::cout << "Done: " << i << std::endl;
+    //std::cout << retMat[3*sizeN + 3] << std::endl;
+
   }
   //return retMat;
 }
 
-std::string createString(aNFAnode* E, int target, char c) {
+bool inCharClass(char c, BitC_CharClass n) {
+  //std::cout << "Tester inCharClass\n";
+  if(n.nranges == 0) {
+    return 0;
+  }
 
+  if(n.nranges == (size_t) -1) {
+    return c != '\0';
+  }
+
+  if(c == '\0') {
+    return 0;
+  }
+
+  //std::cout << "Is charClass\n";
+
+  int success = !n.inclusive;
+  for (int i = 0; i < n.nranges; i++) {
+    for (int j = (int) n.ranges[i].from; j <=  (int) n.ranges[i].to; j++) {
+      if((int) c == j) {
+        //std::cout << "Char in charClass, " << success << "\n";
+        return !success;
+      }
+    }
+  }
+  //std::cout << "Char not in charClass\n";
+  return success;
+}
+
+std::string createString(aNFAnode* E, int target, char c) {
+  //std::cout << "Called createString, target = " << target << " c = " << c <<"\n";
 
   //Are we done?
   if(!c && E->nr == target) {
     return "";
   }
-  int comp = (!E->input || (E->input == c)) ;
+  int comp = ((!E->input  || E->input == c) &&
+                E->charClass.nranges == 0
+              || inCharClass(c, E->charClass)) ;
+  //std::cout << "Comp done\n";
   //got input but wrong progress
   if(!comp) {
     return "na";
@@ -319,7 +212,8 @@ std::string createString(aNFAnode* E, int target, char c) {
   }
   //We havent read char, check if we read it
   if(c && E->right == NULL) {
-    if(E->input == c) {
+    if(E->input == c || inCharClass(c, E->charClass)) {
+      //std::cout << "Found correct char\n";
       return createString(E->left, target, '\0');
     }
       return createString(E->left, target, c);
@@ -444,6 +338,28 @@ std::string split(std::string** S, int Qmax) {
   return prefix;
 }
 
+void freeMatrix(std::string** matrix, int mSize, int lSize) {
+  for(int l = 0; l < lSize; l++) {
+    for(int i = 0; i < mSize; i++) {
+      for(int j = 0; j < mSize; j++) {
+        delete matrix[l*mSize*mSize + i*mSize + j];
+      }
+    }
+  }
+  free(matrix);
+}
+
+void freeANFA(aNFAnode* node, int nr) {
+  aNFAnode** nodes = (aNFAnode**) malloc(sizeof(aNFAnode*) * nr);
+  for(int i = 0; i < nr; i++) {
+    nodes[i] = findN(node, i, nr + 1);
+  }
+  for(int i = 0; i < nr; i++) {
+    free(nodes[i]);
+  }
+  free(nodes);
+}
+
 // Print all possible bitstring-paths with input read so far
 void printPaths(std::string** S, int Qmax) {
   for (int i = 0; i < Qmax; i++) {
@@ -451,4 +367,108 @@ void printPaths(std::string** S, int Qmax) {
       std::cout << "S[" << i << "] = " << *(S[i]) << "\n";
     }
   }
+}
+
+std::string* regExComplete(std::string regEx, std::string test_input) {
+  std::string** S; // The starting state
+  std::string language;
+  BitC_Regex *regex = NULL;
+  aNFAnode* aNFAfirst = aNFAnodeConstructor();
+  aNFAnode* aNFAlast = aNFAnodeConstructor();
+  int matrixSize;
+  std::string** ma;
+
+  std::cout << "Parser nu\n";
+
+
+  BitC_YY_scan_string(regEx.c_str());
+  BitC_YYparse(&regex);
+  BitC_YYlex_destroy();
+
+  //regex = BitC_RegexSimplify(regex);
+
+  std::cout << "Har Parset, generer aNFA\n";
+
+  aNFAgen(regex, aNFAfirst, aNFAlast, &language);
+
+  std::cout << "Har genereret aNFA, tilføjer tal\n";
+
+  matrixSize = addNr(aNFAfirst, 0);
+
+  std::cout << "Har fundet tal, " << matrixSize << " finder sprog\n";
+  std::cout << "Har fundet sprog " << language << ", laver plads til ma\n";
+
+  ma = (std::string**) malloc(matrixSize * matrixSize *
+                             language.size() * sizeof(std::string*));
+
+  std::cout << "Har lavet plads, bygger matricer\n";
+  for(int i = 0; i < language.size(); i++) {
+    //ma[i*matrixSize*matrixSize] = buildMatrix(&aNFAfirst, matrixSize, language.at(i));
+    buildMatrix(aNFAfirst, matrixSize, language.at(i), ma + (i*matrixSize*matrixSize));
+  }
+
+  std::cout << "Matricer bygget, laver S\n";
+
+  S = (std::string**) malloc(sizeof(std::string*) * matrixSize);
+  for(int i = 0; i < matrixSize; i++) {
+    S[i] = new std::string();
+    *S[i] = createString(aNFAfirst, i, '\0');
+  }
+
+  std::cout << "S er skabt\n";
+
+  std::cout << "Your matrix\n";
+  for(int i = 0; i < language.size(); i++) {
+    std::cout << "Letter " << language[i] << std::endl;
+    printMatrix(ma + i*matrixSize*matrixSize, matrixSize);
+    std::cout << std::endl;
+  }
+
+  std::cout << "aNFA simulation:\n";
+  std::cout << "regex = " << regEx << "\n";
+  std::cout << "input = " << test_input << "\n";
+
+  // Test input validity
+  for (int i = 0; i < test_input.length(); i++) {
+    if (language.find(test_input[i]) == std::string::npos) {
+        std::cout << "INVALID INPUT!\n";
+        std::cout << "Change the std::string test_input in main().\n";
+        std::cout << "Input must be valid for the regular expression.\n";
+        std::cout << "Simulation canceled.\n";
+        std::string* r = new std::string("Invalid input");
+        return r;
+    }
+  }
+
+  std::cout << "Initial state:\n"; // Before simulation
+  printPaths(S, matrixSize);
+
+  // Convert input string to a stream.
+  std::istringstream is;
+  is.str(test_input);
+
+  // Run simulation
+  simulate(S, language, ma, matrixSize, is);
+
+  std::string* retS = new std::string();
+  *retS = *S[aNFAlast->nr];
+
+
+
+
+
+  std::cout << "Freeing Memory\n";
+
+
+  for(int i = 0; i < matrixSize; i++) {
+    delete S[i];
+  }
+  free(S);
+  std::cout << "S freed\n";
+  freeANFA(aNFAfirst, matrixSize);
+  std::cout << "aNFA freed\n";
+  freeMatrix(ma, matrixSize, language.size());
+  std::cout << "Matrices freed\n";
+
+  return retS;
 }

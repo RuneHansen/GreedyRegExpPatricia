@@ -11,26 +11,28 @@
 
 // ============== This is a simple implementation of aNFA simulation ==================
 
-// S[x] is a pointer to the smallest bitstring representing a path to the state x, using the input read so far.
-// L is the language, it is a string with one occurence of each character in the language.
-// qMax is total number of states in the aNFA.
-// stream is the input stream
-
-// simulate() call update() for each character in the input.
-// update() updates the initial state S. Update is defined in Simple_aNFASimulator.h
-
 // In this simple implementation bitstrings are represented by strings containing only ones and zeroes.
+// The primary function here is 'simulate'. It calls the other functions and is the only function accessible from outside.
+// 1. Parse the regular expression.
+// 2. Create the aNFA using the functions aNFAgen and addNr.
+// 3. Create the transition matrices using the functions buildMatrix and createString.
+// 4. Run the simulation using the function update.
 
-//returns the language for a regular expression given its aNFA,
-// as a string with one occurence of each character in the language.
+// Returns the language for a regular expression given its aNFA,
+//  as a string with one occurence of each character in the language.
 std::string findLanguage(aNFAnode* E) {
+
   std::string language("");
-  //get language from sub1
-  std::cout << "E " << E << " starter kald af selv\n";
+
+  // Get language from subexpression 1
   if (E->left) {
     language = findLanguage(E->left);
-    if (E->right) {  //get language from sub2
+
+    // Get language from subexpression 2
+    if (E->right) {
       std::string temp = findLanguage(E->right);
+
+      // Merge the languages of subexpression 1 and 2
       for (int i = 0; i < temp.length(); i++) {
         int fail = 0;
         for (int j = 0; j < language.length(); i++) {
@@ -45,9 +47,8 @@ std::string findLanguage(aNFAnode* E) {
       }
     }
   }
-  std::cout << "Kald af selv slut, for " << E << std::endl;
 
-  //add this char
+  // Add the char from this node
   if(E->input) {
     int fail = 0;
     for (int i = 0; i < language.length(); i++) {
@@ -61,28 +62,32 @@ std::string findLanguage(aNFAnode* E) {
     }
   }
 
-  //reutrn language
   return language;
 }
 
-
-void printMatrix(std::string** matrix, int sizeQ) {
-  if(sizeQ < 20) {
-    for(int i = 0; i < sizeQ; i++) {
-      for(int j = 0; j < sizeQ; j++) {
-        if(*matrix[i*sizeQ + j] == "") {
+// Given a relations matrix and the number of states in the aNFA (the matrix dimentions).
+// Prints the matrix, if numStates < 20.
+void printMatrix(std::string** matrix, int numStates) {
+  if(numStates < 20) {
+    for(int i = 0; i < numStates; i++) {
+      for(int j = 0; j < numStates; j++) {
+        if(*matrix[i*numStates + j] == "") {
           std::cout << "e ";
         } else {
-          std::cout << *matrix[i*sizeQ + j] + " ";
+          std::cout << *matrix[i*numStates + j] + " ";
         }
       }
       std::cout << std::endl;
     }
     return;
   }
-  std::cout << "Too big\n";
+  std::cout << "The transition matrix is too large to be printed.\n";
 }
 
+// Part of the aNFA construction process.
+// Given the starting state/node of an aNFA, without state numbers, and the integer 0.
+// Gives numbers to each aNFAnode, that are unique within that aNFA.
+// Returns the total number of states (numStates)
 int addNr(aNFAnode* E, int nr) {
   //std::cout << "E->nr = " << E->nr << std::endl;
   if(E->nr == 0) {
@@ -98,6 +103,9 @@ int addNr(aNFAnode* E, int nr) {
   return nr;
 }
 
+// Find the aNFAnode with the statenumber n.
+// Given E = starting node of the aNFA,
+//  and d = the total number of aNFA states.
 aNFAnode* findN(aNFAnode* E, int n, int d) {
   aNFAnode* ret;
   //std::cout << "Looking for " << n << std::endl;
@@ -133,92 +141,37 @@ aNFAnode* findN(aNFAnode* E, int n, int d) {
   return E;
 }
 
-void buildMatrix(aNFAnode* E, int sizeN, char c,  std::string** matrix) {
-  std::string** retMat = matrix;
-
-  //std::string* retMat = (std::string*) malloc(sizeof(std::string) * sizeN * sizeN);
-  for(int i = 0; i < sizeN*sizeN; i++) {
-      retMat[i] = new std::string("na");
-  }
-  //std::cout << "Har kaldt new\n";
-  aNFAnode* tmp;
-  for(int i = 0; i < sizeN; i++) {
-    std::cout << i << ", " << E->nr << std::endl;
-    tmp = findN(E, i, sizeN + 1);
-
-    //std::cout << "Found i " << i << std::endl;
-    if(i != tmp->nr) {
-      std::cout << "Wrong find " << i << " " << tmp->nr << std::endl;
-    }
-    //if(i == 3)
-      //std::cout << "Find succeed\n";
-    for(int j = 0; j < sizeN; j++) {
-      *retMat[i*sizeN + j] = createString(tmp, j, c );
-    }
-    //std::cout << "Done: " << i << std::endl;
-    //std::cout << retMat[3*sizeN + 3] << std::endl;
-
-  }
-  //return retMat;
-}
-
-bool inCharClass(char c, BitC_CharClass n) {
-  //std::cout << "Tester inCharClass\n";
-  if(n.nranges == 0) {
-    return 0;
-  }
-
-  if(n.nranges == (size_t) -1) {
-    return c != '\0';
-  }
-
-  if(c == '\0') {
-    return 0;
-  }
-
-  //std::cout << "Is charClass\n";
-
-  int success = !n.inclusive;
-  for (int i = 0; i < n.nranges; i++) {
-    for (int j = (int) n.ranges[i].from; j <=  (int) n.ranges[i].to; j++) {
-      if((int) c == j) {
-        //std::cout << "Char in charClass, " << success << "\n";
-        return !success;
-      }
-    }
-  }
-  //std::cout << "Char not in charClass\n";
-  return success;
-}
-
+// Create the lexicographically least bitstring,
+//  representing a path from node E to 'target' in the aNFA and reading c on the way.
 std::string createString(aNFAnode* E, int target, char c) {
-  //std::cout << "Called createString, target = " << target << " c = " << c <<"\n";
 
-  //Are we done?
+  // Is this the node we are looking for?
   if(!c && E->nr == target) {
     return "";
   }
+
+  // Can we pass through this node?
   int comp = ((!E->input  || E->input == c) &&
                 E->charClass.nranges == 0
               || inCharClass(c, E->charClass)) ;
-  //std::cout << "Comp done\n";
-  //got input but wrong progress
   if(!comp) {
     return "na";
   }
-  //We are at end node, not target
+
+  // Is this the finishing state?
   if(E->left == NULL) {
     return "na";
   }
-  //We havent read char, check if we read it
+
+  // Do we read our character when passing through this node?
   if(c && E->right == NULL) {
     if(E->input == c || inCharClass(c, E->charClass)) {
-      //std::cout << "Found correct char\n";
       return createString(E->left, target, '\0');
     }
       return createString(E->left, target, c);
   }
-  //A split path, return the best string
+
+  // A split path, return the best string
   if(E->right != NULL) {
     std::string tmp =  createString(E->left, target, c);
     std::string tmp2 = createString(E->right, target, c);
@@ -230,63 +183,224 @@ std::string createString(aNFAnode* E, int target, char c) {
     }
     return "0" + tmp;
   }
-  //Only one path, no required input
+
+  // Only one path, no required input
   return createString(E->left, target, c);
 }
 
+// Build the transition matrix for a specific character c
+// E is the initial node/state of the aNFA.
+// 'matrix' is a pointer to allocated space with room enough for the matrix.
+void buildMatrix(aNFAnode* E, int numStates, char c,  std::string** matrix) {
+  std::string** retMat = matrix;
 
-// Call update() for each character in the input stream.
-void simulate(std::string** S, std::string L, std::string** ms, int qMax, std::istream& stream) {
-  char input;
-  int lSize = L.size();
-  int nr;
+  // Set default values
+  for(int i = 0; i < numStates*numStates; i++) {
+      retMat[i] = new std::string("na");
+  }
 
-  while(stream.get(input)) {
-    for(int i = 0; i < lSize; i++) {
-      if(L[i] == input) {
-        nr = i;
-      }
+  // Set all paths
+  aNFAnode* tmp;
+  for(int i = 0; i < numStates; i++) {
+    tmp = findN(E, i, numStates + 1);
+
+    for(int j = 0; j < numStates; j++) {
+      *retMat[i*numStates + j] = createString(tmp, j, c );
     }
-    std::cout << "Updating\n";
-    update(S, qMax, ms + (nr*qMax*qMax));
   }
 }
 
-// Simulates reading a char
-// Change S, that is the current set of paths reachable with the imput read so for.
-void update(std::string** S, const int Qmax, std::string** m) {
+// Is a given character in a given char class or not?
+bool inCharClass(char c, BitC_CharClass n) {
+  // Are there any ranges?
+  if(n.nranges == 0) {
+    return 0;
+  }
 
-  std::string** newS = (std::string**) malloc(sizeof(std::string) * Qmax);
+  // Is this an "any"?
+  if(n.nranges == (size_t) -1) {
+    return c != '\0';
+  }
 
+  // Are we even looking for anything?
+  //  Prevents '\0' from being accepted by uninclusive charCrasses.
+  if(c == '\0') {
+    return 0;
+  }
 
-  for(int i = 0; i < Qmax; i++) {
+  // Look for character in all ranges
+  int success = !n.inclusive;
+  for (int i = 0; i < n.nranges; i++) {
+    for (int j = (int) n.ranges[i].from; j <=  (int) n.ranges[i].to; j++) {
+      if((int) c == j) {
+        return !success;
+      }
+    }
+  }
+  return success;
+}
+
+// Free all the transition matrices
+void freeMatrix(std::string** matrix, int mSize, int lSize) {
+  for(int l = 0; l < lSize; l++) {
+    for(int i = 0; i < mSize; i++) {
+      for(int j = 0; j < mSize; j++) {
+        delete matrix[l*mSize*mSize + i*mSize + j];
+      }
+    }
+  }
+  free(matrix);
+}
+
+// Free all the nodes in aNFA
+void freeANFA(aNFAnode* node, int nr) {
+  aNFAnode** nodes = (aNFAnode**) malloc(sizeof(aNFAnode*) * nr);
+  for(int i = 0; i < nr; i++) {
+    nodes[i] = findN(node, i, nr + 1);
+  }
+  for(int i = 0; i < nr; i++) {
+    free(nodes[i]);
+  }
+  free(nodes);
+}
+
+// Print all possible bitstring-paths with input read so far
+void printPaths(std::string** S, int numStates) {
+  for (int i = 0; i < numStates; i++) {
+    if (*(S[i]) != "na") {
+      std::cout << "S[" << i << "] = " << *(S[i]) << "\n";
+    }
+  }
+}
+
+// Simulate reading a char.
+// Change S, the current set of paths reachable with the imput read so far.
+// numStates is the total number of states in the aNFA. and m is a transition matrix.
+void update(std::string** S, const int numStates, std::string** m) {
+
+  std::string** newS = (std::string**) malloc(sizeof(std::string) * numStates);
+
+  for(int i = 0; i < numStates; i++) {
     std::string* tmp = new std::string();
     newS[i] = tmp;
   }
 
-  for (int i = 0; i < Qmax; i++) {
+  for (int i = 0; i < numStates; i++) {
     (*newS[i]) = "na";
-    for (int j = 0; j < Qmax; j++) {
-        if (*(S[j]) != "na" && //Is there a path from j to i?
-            (*m[j*Qmax+i]) != "na" &&
-            ((*newS[i]) == "na" || //Is it the shortest?
-             S[j]->size() + m[j*Qmax+i]->size() < newS[i]->size())) {
-          (*newS[i]) = *(S[j])+(*m[j*Qmax+i]);
-        }
+    for (int j = 0; j < numStates; j++) {
+
+      if (*(S[j]) != "na" && //Is there a path from j to i?
+          (*m[j*numStates+i]) != "na" &&
+          ((*newS[i]) == "na" || //Is it the lexicographically least?
+            S[j]->size() + m[j*numStates+i]->size() < newS[i]->size())) {
+
+        (*newS[i]) = *(S[j])+(*m[j*numStates+i]);
+      }
     }
   }
-    for (int i = 0; i < Qmax; i++) {
+
+  for (int i = 0; i < numStates; i++) {
         *(S[i]) = (*newS[i]);
-    }
-  for(int i = 0; i < Qmax; i++) {
+  }
+
+  for(int i = 0; i < numStates; i++) {
     delete newS[i];
   }
+
   free(newS);
 }
 
+// Run aNFA simulation
+// Takes regEx = a regular expression, and test_input = an input string.
+// Returns the lexicographically least bitstring,
+// representing a path through to the aNFA finishing state, while reading the input.
+std::string* simulate(std::string regEx, std::string test_input) {
+
+  // Parse the string-form regular expression, to the regular expression type BitC_Regex
+  BitC_Regex *regex = NULL;
+  BitC_YY_scan_string(regEx.c_str());
+  BitC_YYparse(&regex);
+  BitC_YYlex_destroy();
+
+  // Generate the aNFA nodes with connections
+  std::string language;// will contain one exactly one occurense, of each different literal,
+                       // that appear in the regular expression.
+  aNFAnode* initialState = aNFAnodeConstructor();
+  aNFAnode* finishingState = aNFAnodeConstructor();
+  aNFAgen(regex, initialState, finishingState, &language);
+
+  // Add state numbers. numStates is the total number of states.
+  int numStates = addNr(initialState, 0);
+
+  // Create transition matrices. allM contains all the transition matrices.
+  std::string** allM = (std::string**) malloc(numStates * numStates *
+                             language.size() * sizeof(std::string*));
+  for(int i = 0; i < language.size(); i++) {
+    buildMatrix(initialState, numStates, language.at(i), allM + (i*numStates*numStates));
+  }
+
+  // Create S for the initial state (using transition matrix epsilon).
+  // S[q] is the lexicographically least bitstring,
+  //  representing a path through the aNFA to state q, using the input read so far.
+  std::string** S = (std::string**) malloc(sizeof(std::string*) * numStates);
+  for(int i = 0; i < numStates; i++) {
+    S[i] = new std::string();
+    *S[i] = createString(initialState, i, '\0');
+  }
+
+  // Print simulation arguments
+  std::cout << "aNFA simulation:\n";
+  std::cout << "regex = " << regEx << "\n";
+  std::cout << "input = " << test_input << "\n";
+
+  // Test input validity
+  for (int i = 0; i < test_input.length(); i++) {
+    if (language.find(test_input[i]) == std::string::npos) {
+        std::cout << "INVALID INPUT!\n";
+        std::cout << "Change the std::string test_input in main().\n";
+        std::cout << "Input must be valid for the regular expression.\n";
+        std::cout << "Simulation canceled.\n";
+        std::string* r = new std::string("Invalid input");
+        return r;
+    }
+  }
+
+  // Convert input string to a stream.
+  std::istringstream is;
+  is.str(test_input);
+
+  // Run simulation
+  char curChar;
+  int lSize = language.size();
+  int charNr;// placement in language and allM
+  while(is.get(curChar)) {
+    for(int i = 0; i < lSize; i++) {
+      if(language[i] == curChar) {
+        CharNr = i;
+      }
+    }
+    update(S, numStates, allM + (CharNr*numStates*numStates));
+  }
+
+
+  std::string* output = new std::string();
+  *output = *S[finishingState->nr];
+
+  // Free memory
+  for(int i = 0; i < numStates; i++) {
+    delete S[i];
+  }
+  free(S);
+  freeANFA(initialState, numStates);
+  freeMatrix(allM, numStates, language.size());
+
+  return output;
+}
+
+
 // Find longest prefix common to all strings in the list,
 // remove the prefix from all strings in the list and return the prefix.
-std::string split(std::string** S, int Qmax) {
+std::string split(std::string** S, int numStates) {
 
   // The index of the characters we are comparing
   int cInd = 0;
@@ -299,7 +413,7 @@ std::string split(std::string** S, int Qmax) {
 
   char tmp = S[0]->at(0);
   for (int c = 0; c < stringLength; c++) { // Each char
-    for (int i = 0; i < Qmax; i++) { // in each string
+    for (int i = 0; i < numStates; i++) { // in each string
       // Break at the end of the longest common prefix and/or the shortest string.
       if (S[i]->at(cInd) != '\0' && S[i]->at(cInd) != tmp) {
         success = 0;
@@ -330,145 +444,10 @@ std::string split(std::string** S, int Qmax) {
     // Free memory
     free(ttmp);
   }
-  for (int i = 0; i < Qmax; i++){
+  for (int i = 0; i < numStates; i++){
     S[i]->erase(0, cInd);
   }
 
   // Return the longest common prefix
   return prefix;
-}
-
-void freeMatrix(std::string** matrix, int mSize, int lSize) {
-  for(int l = 0; l < lSize; l++) {
-    for(int i = 0; i < mSize; i++) {
-      for(int j = 0; j < mSize; j++) {
-        delete matrix[l*mSize*mSize + i*mSize + j];
-      }
-    }
-  }
-  free(matrix);
-}
-
-void freeANFA(aNFAnode* node, int nr) {
-  aNFAnode** nodes = (aNFAnode**) malloc(sizeof(aNFAnode*) * nr);
-  for(int i = 0; i < nr; i++) {
-    nodes[i] = findN(node, i, nr + 1);
-  }
-  for(int i = 0; i < nr; i++) {
-    free(nodes[i]);
-  }
-  free(nodes);
-}
-
-// Print all possible bitstring-paths with input read so far
-void printPaths(std::string** S, int Qmax) {
-  for (int i = 0; i < Qmax; i++) {
-    if (*(S[i]) != "na") {
-      std::cout << "S[" << i << "] = " << *(S[i]) << "\n";
-    }
-  }
-}
-
-std::string* regExComplete(std::string regEx, std::string test_input) {
-  std::string** S; // The starting state
-  std::string language;
-  BitC_Regex *regex = NULL;
-  aNFAnode* aNFAfirst = aNFAnodeConstructor();
-  aNFAnode* aNFAlast = aNFAnodeConstructor();
-  int matrixSize;
-  std::string** ma;
-
-  std::cout << "Parser nu\n";
-
-
-  BitC_YY_scan_string(regEx.c_str());
-  BitC_YYparse(&regex);
-  BitC_YYlex_destroy();
-
-  //regex = BitC_RegexSimplify(regex);
-
-  std::cout << "Har Parset, generer aNFA\n";
-
-  aNFAgen(regex, aNFAfirst, aNFAlast, &language);
-
-  std::cout << "Har genereret aNFA, tilføjer tal\n";
-
-  matrixSize = addNr(aNFAfirst, 0);
-
-  std::cout << "Har fundet tal, " << matrixSize << " finder sprog\n";
-  std::cout << "Har fundet sprog " << language << ", laver plads til ma\n";
-
-  ma = (std::string**) malloc(matrixSize * matrixSize *
-                             language.size() * sizeof(std::string*));
-
-  std::cout << "Har lavet plads, bygger matricer\n";
-  for(int i = 0; i < language.size(); i++) {
-    //ma[i*matrixSize*matrixSize] = buildMatrix(&aNFAfirst, matrixSize, language.at(i));
-    buildMatrix(aNFAfirst, matrixSize, language.at(i), ma + (i*matrixSize*matrixSize));
-  }
-
-  std::cout << "Matricer bygget, laver S\n";
-
-  S = (std::string**) malloc(sizeof(std::string*) * matrixSize);
-  for(int i = 0; i < matrixSize; i++) {
-    S[i] = new std::string();
-    *S[i] = createString(aNFAfirst, i, '\0');
-  }
-
-  std::cout << "S er skabt\n";
-
-  std::cout << "Your matrix\n";
-  for(int i = 0; i < language.size(); i++) {
-    std::cout << "Letter " << language[i] << std::endl;
-    printMatrix(ma + i*matrixSize*matrixSize, matrixSize);
-    std::cout << std::endl;
-  }
-
-  std::cout << "aNFA simulation:\n";
-  std::cout << "regex = " << regEx << "\n";
-  std::cout << "input = " << test_input << "\n";
-
-  // Test input validity
-  for (int i = 0; i < test_input.length(); i++) {
-    if (language.find(test_input[i]) == std::string::npos) {
-        std::cout << "INVALID INPUT!\n";
-        std::cout << "Change the std::string test_input in main().\n";
-        std::cout << "Input must be valid for the regular expression.\n";
-        std::cout << "Simulation canceled.\n";
-        std::string* r = new std::string("Invalid input");
-        return r;
-    }
-  }
-
-  std::cout << "Initial state:\n"; // Before simulation
-  printPaths(S, matrixSize);
-
-  // Convert input string to a stream.
-  std::istringstream is;
-  is.str(test_input);
-
-  // Run simulation
-  simulate(S, language, ma, matrixSize, is);
-
-  std::string* retS = new std::string();
-  *retS = *S[aNFAlast->nr];
-
-
-
-
-
-  std::cout << "Freeing Memory\n";
-
-
-  for(int i = 0; i < matrixSize; i++) {
-    delete S[i];
-  }
-  free(S);
-  std::cout << "S freed\n";
-  freeANFA(aNFAfirst, matrixSize);
-  std::cout << "aNFA freed\n";
-  freeMatrix(ma, matrixSize, language.size());
-  std::cout << "Matrices freed\n";
-
-  return retS;
 }

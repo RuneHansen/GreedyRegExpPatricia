@@ -16,6 +16,7 @@
 
 struct aNFAnode {
   char input = '\0';
+  BitC_CharClass charClass;
   aNFAnode* left = NULL;
   aNFAnode* right = NULL;
   int nr = 0;
@@ -47,3 +48,11 @@ std::string split(std::string** S, int Qmax);
 
 
 void simulate(std::string** S, std::string L, std::string** ms, int qMax, std::istream& stream);
+
+aNFAnode* aNFAnodeConstructor();
+
+void freeMatrix(std::string** matrix, int mSize, int lSize);
+
+void freeANFA(aNFAnode* node, int nr);
+
+std::string* regExComplete(std::string regEx, std::string test_input);
