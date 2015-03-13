@@ -11,109 +11,7 @@
 #include "lex.h"
 #include "parser.h"
 
-std::string* regExComplete(std::string regEx, std::string test_input) {
-  std::string** S; // The starting state
-  std::string language;
-  BitC_Regex *regex = NULL;
-  aNFAnode* aNFAfirst = aNFAnodeConstructor();
-  aNFAnode* aNFAlast = aNFAnodeConstructor();
-  int matrixSize;
-  std::string** ma;
-  
-  std::cout << "Parser nu\n";
 
-
-  BitC_YY_scan_string(regEx.c_str());
-  BitC_YYparse(&regex);
-  BitC_YYlex_destroy();
-
-  //regex = BitC_RegexSimplify(regex);
-
-  std::cout << "Har Parset, generer aNFA\n";
-
-  aNFAgen(regex, aNFAfirst, aNFAlast, &language);
-
-  std::cout << "Har genereret aNFA, tilføjer tal\n";
-
-  matrixSize = addNr(aNFAfirst, 0);
-
-  std::cout << "Har fundet tal, " << matrixSize << " finder sprog\n";
-  std::cout << "Har fundet sprog " << language << ", laver plads til ma\n";
-
-  ma = (std::string**) malloc(matrixSize * matrixSize *
-                             language.size() * sizeof(std::string*));
-
-  std::cout << "Har lavet plads, bygger matricer\n";
-  for(int i = 0; i < language.size(); i++) {
-    //ma[i*matrixSize*matrixSize] = buildMatrix(&aNFAfirst, matrixSize, language.at(i));
-    buildMatrix(aNFAfirst, matrixSize, language.at(i), ma + (i*matrixSize*matrixSize));
-  }
-
-  std::cout << "Matricer bygget, laver S\n";
-
-  S = (std::string**) malloc(sizeof(std::string*) * matrixSize);
-  for(int i = 0; i < matrixSize; i++) {
-    S[i] = new std::string();
-    *S[i] = createString(aNFAfirst, i, '\0');
-  }
-
-  std::cout << "S er skabt\n";
-
-  std::cout << "Your matrix\n";
-  for(int i = 0; i < language.size(); i++) {
-    std::cout << "Letter " << language[i] << std::endl;
-    printMatrix(ma + i*matrixSize*matrixSize, matrixSize);
-    std::cout << std::endl;
-  }
-
-  std::cout << "aNFA simulation:\n";
-  std::cout << "regex = " << regEx << "\n";
-  std::cout << "input = " << test_input << "\n";
-
-  // Test input validity
-  for (int i = 0; i < test_input.length(); i++) {
-    if (language.find(test_input[i]) == std::string::npos) {
-        std::cout << "INVALID INPUT!\n";
-        std::cout << "Change the std::string test_input in main().\n";
-        std::cout << "Input must be valid for the regular expression.\n";
-        std::cout << "Simulation canceled.\n";
-        std::string* r = new std::string("Invalid input");
-        return r;
-    }
-  }
-
-  std::cout << "Initial state:\n"; // Before simulation
-  printPaths(S, matrixSize);
-
-  // Convert input string to a stream.
-  std::istringstream is;
-  is.str(test_input);
-
-  // Run simulation
-  simulate(S, language, ma, matrixSize, is);
-
-  std::string* retS = new std::string();
-  *retS = *S[aNFAlast->nr];
-
-
-
-
-
-  std::cout << "Freeing Memory\n";
-
-
-  for(int i = 0; i < matrixSize; i++) {
-    delete S[i];
-  }
-  free(S);
-  std::cout << "S freed\n";
-  freeANFA(aNFAfirst, matrixSize);
-  std::cout << "aNFA freed\n";
-  freeMatrix(ma, matrixSize, language.size());
-  std::cout << "Matrices freed\n";
-
-  return retS;
-}
 
 struct testCase {
   std::string regex;
@@ -134,12 +32,12 @@ void newTest() {
   std::cout << "RNG test " << (char) 122 << "\n";
 
   std::list<testCase> cases;
-  
+
   cases.push_back(fillTC("ac.*bc", "acbc", "1"));
   cases.push_back(fillTC("ac.*bc", "acbcbc", "001"));
   cases.push_back(fillTC("abafd", "abafd", ""));
   cases.push_back(fillTC("a*", "aaaa", "00001"));
-  cases.push_back(fillTC("(ab)|(ab)", "ab", "0"));  
+  cases.push_back(fillTC("(ab)|(ab)", "ab", "0"));
   cases.push_back(fillTC("(aab)?ab", "ab", "1"));
   cases.push_back(fillTC("(aab)?ab", "aabab", "0"));
   cases.push_back(fillTC("(aab)|ab", "ab", "1"));
@@ -148,8 +46,8 @@ void newTest() {
   //cases.push_back(fillTC("\t\n\v\r\f\a\g", "\t\n\v\r\f\ag", ""));
   cases.push_back(fillTC("([a-c]*)?", "acc", "00001"));
   cases.push_back(fillTC("([a-c]*)?", "a", "001"));
-  
-  
+
+
   cases.push_back(fillTC("ab.c", "abbc", ""));
   cases.push_back(fillTC("ax.c", "axxc", ""));
   cases.push_back(fillTC("ab[x-z].*", "abxxyzb", "00001"));
@@ -187,9 +85,9 @@ void newTest() {
   cases.push_back(fillTC("[a-zA-Z_][a-zA-Z0-9_]*", "alpha", "00001"));
   cases.push_back(fillTC("a(bc+|b[e-h])g|.h", "bh", "1"));
 
-  
+
   for (std::list<testCase>::iterator it=cases.begin(); it != cases.end(); ++it) {
-    
+
     std::string tmp = *regExComplete(it->regex, it->input);
     if (it->bitstring != tmp) {
       std::cout << "FAILED! At (regex, input): "
@@ -220,7 +118,7 @@ int main() {
     std::cin.getline(input, 100);
 
     result = regExComplete(regEx, input);
-    
+
     std::cout << "Result: " << *result << std::endl;
     return 0;
   } else {

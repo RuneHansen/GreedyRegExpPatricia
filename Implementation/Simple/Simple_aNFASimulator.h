@@ -54,3 +54,5 @@ aNFAnode* aNFAnodeConstructor();
 void freeMatrix(std::string** matrix, int mSize, int lSize);
 
 void freeANFA(aNFAnode* node, int nr);
+
+std::string* regExComplete(std::string regEx, std::string test_input);
