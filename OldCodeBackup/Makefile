@@ -24,13 +24,15 @@ HEADERS=\
 	parser.h\
 	lex.h\
 	regex.h\
-  Simple_aNFASimulator.h
+  Simple_aNFASimulator.h\
+  aNFAgen.h
 
 OBJECTS=\
 	obj/regex.o\
 	obj/parser.o\
 	obj/lex.o\
-  obj/Simple_aNFASimulator.o
+  obj/Simple_aNFASimulator.o\
+  obj/aNFAgen.o
 
 # Code generation
 

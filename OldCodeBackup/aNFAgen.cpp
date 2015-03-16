@@ -1,6 +1,15 @@
+#include <string>
+#include <list>
+#include <iostream>
+#include <sstream>
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "aNFAgen.h"
 
 
-
+//Create an empty aNFA node
 aNFAnode* aNFAnodeConstructor() {
   aNFAnode* ret = (aNFAnode*) malloc(sizeof(aNFAnode));
   ret->nr = 0;
@@ -11,13 +20,17 @@ aNFAnode* aNFAnodeConstructor() {
   return ret;
 }
 
-
+//Generates the complete aNFA
+//E is the regular expression that the aNFA must represent.
+//i is the initial state
+//f is the finishing state
+//language must be set to include exactly one occurense, of each different literal,
+    //in the regular expression.
 void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
   if (E) {
     switch(E->op) {
     case BitC_RegexOp_Lit :
       {
-      std::cout << "Laver lit\n";
       i->input = E->litChar;
       i->left = f;
       if(language->find(i->input) == std::string::npos) {
@@ -27,7 +40,6 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       }
     case BitC_RegexOp_LitString :
       {
-      std::cout << "Laver litstring\n";
       aNFAnode* prev = aNFAnodeConstructor();
       i->left = prev;
       prev->left = f;
@@ -49,7 +61,6 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       }
     case BitC_RegexOp_Plus :
       {
-      std::cout << "Laver plus\n";
       aNFAnode* loop = aNFAnodeConstructor();
       aNFAnode* q = aNFAnodeConstructor();
       i->left = q;
@@ -60,7 +71,6 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       }
     case BitC_RegexOp_Star :
       {
-      std::cout << "Laver star\n";
       aNFAnode* loop = aNFAnodeConstructor();
       aNFAnode* q = aNFAnodeConstructor();
       i->left = loop;
@@ -69,16 +79,8 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       aNFAgen(E->sub1,q,loop, language);
       break;
       }
-    /*case BitC_RegexOp_Concat2 :
-      {
-      aNFAnode* q = (aNFAnode*) malloc (sizeof(aNFAnode));
-      aNFAgen(E->subs[0],i,q);
-      aNFAgen(E->subs[1],q,f);
-      break;
-      } */
     case BitC_RegexOp_Concat :
     {
-      std::cout << "Laver concat\n";
       aNFAnode* prev = aNFAnodeConstructor();
       aNFAgen(E->subs[0],i,prev, language);
       for(int i = 1; i < E->nsub; i++) {
@@ -91,7 +93,6 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
     }
     case BitC_RegexOp_Alt:
       {
-      std::cout << "Laver alt\n";
       aNFAnode* s = aNFAnodeConstructor();
       aNFAnode* q = aNFAnodeConstructor();
       aNFAnode* s2;
@@ -100,15 +101,11 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       aNFAgen(E->subs[0], q, f, language);
 
       int n = E->nsub;
-      //std::cout << "nsub number " << n << std::endl;
-      //std::cout << "Nr's " << s->nr << " " << q->nr << " " << i->nr << " " << f->nr << "\n";
       for(int j = 1; j < n; j++) {
         s2 = aNFAnodeConstructor();
         q = aNFAnodeConstructor();
         s->left = q;
-        //std::cout << "q's nr " << q->nr << std::endl;
         aNFAgen(E->subs[j], q, f, language);
-        //std::cout << "Nr2's" << q->nr << " " << s2->nr << std::endl;
         if(j == n-1) {
           free(s2);
         } else {
@@ -120,24 +117,20 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       }
     case BitC_RegexOp_Any:
       {
-      std::cout << "Laver any\n";
       i->charClass.nranges = (size_t) -1;
       i->left = f;
       break;
       }
     case BitC_RegexOp_BeginText:
-      std::cout << "Lavede BeginText\n";
       break;
     case BitC_RegexOp_Capture:
       {
-      std::cout << "Laver capture\n";
 
       aNFAgen(E->sub1, i, f, language);
       break;
       }
     case BitC_RegexOp_CharClass:
       {
-        std::cout << "Laver charClass\n";
         for(int i = 0; i < E->charClass.nranges; i++) {
           for(int j = (int) E->charClass.ranges[i].from; j <= (int) E->charClass.ranges[i].to; j++) {
             if(language->find( (char) j ) == std::string::npos) {
@@ -157,13 +150,11 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       }
     case BitC_RegexOp_EndText:
       {
-      std::cout << "Lavede EndText " << E->nsub << std::endl;
       aNFAgen(E->sub1, i, f, language);
       break;
       }
     case BitC_RegexOp_Question:
       {
-      std::cout << "Laver Question\n";
       i->right = f;
       aNFAnode* q = aNFAnodeConstructor();
       i->left = q;
@@ -171,11 +162,9 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       break;
       }
     case BitC_RegexOp_Repeat:
-      std::cout << "Lavede Repeat\n";
       break;
     case BitC_RegexOp_Unit:
       {
-      std::cout << "Laver unit\n";
       i->left = f;
       break;
       }

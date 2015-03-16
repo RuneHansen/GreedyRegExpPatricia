@@ -6,7 +6,7 @@
 #include "regex.h"
 #include "lex.h"
 #include "parser.h"
-#include "aNFAgen.cpp"
+#include "aNFAgen.h"
 
 
 // ============== This is a simple implementation of aNFA simulation ==================
@@ -17,53 +17,6 @@
 // 2. Create the aNFA using the functions aNFAgen and addNr.
 // 3. Create the transition matrices using the functions buildMatrix and createString.
 // 4. Run the simulation using the function update.
-
-// Returns the language for a regular expression given its aNFA,
-//  as a string with one occurence of each character in the language.
-std::string findLanguage(aNFAnode* E) {
-
-  std::string language("");
-
-  // Get language from subexpression 1
-  if (E->left) {
-    language = findLanguage(E->left);
-
-    // Get language from subexpression 2
-    if (E->right) {
-      std::string temp = findLanguage(E->right);
-
-      // Merge the languages of subexpression 1 and 2
-      for (int i = 0; i < temp.length(); i++) {
-        int fail = 0;
-        for (int j = 0; j < language.length(); i++) {
-          if (temp[i] == language[j]) {
-            fail = 1;
-            break;
-          }
-        }
-        if(!fail) {
-          language += temp[i];
-        }
-      }
-    }
-  }
-
-  // Add the char from this node
-  if(E->input) {
-    int fail = 0;
-    for (int i = 0; i < language.length(); i++) {
-      if (language[i] == E->input) {
-        fail = 1;
-        break;
-      }
-    }
-    if (!fail) {
-      language += E->input;
-    }
-  }
-
-  return language;
-}
 
 // Given a relations matrix and the number of states in the aNFA (the matrix dimentions).
 // Prints the matrix, if numStates < 20.
@@ -141,6 +94,36 @@ aNFAnode* findN(aNFAnode* E, int n, int d) {
   return E;
 }
 
+// Is a given character in a given char class or not?
+bool inCharClass(char c, BitC_CharClass n) {
+  // Are there any ranges?
+  if(n.nranges == 0) {
+    return 0;
+  }
+
+  // Is this an "any"?
+  if(n.nranges == (size_t) -1) {
+    return c != '\0';
+  }
+
+  // Are we even looking for anything?
+  //  Prevents '\0' from being accepted by uninclusive charCrasses.
+  if(c == '\0') {
+    return 0;
+  }
+
+  // Look for character in all ranges
+  int success = !n.inclusive;
+  for (int i = 0; i < n.nranges; i++) {
+    for (int j = (int) n.ranges[i].from; j <=  (int) n.ranges[i].to; j++) {
+      if((int) c == j) {
+        return !success;
+      }
+    }
+  }
+  return success;
+}
+
 // Create the lexicographically least bitstring,
 //  representing a path from node E to 'target' in the aNFA and reading c on the way.
 std::string createString(aNFAnode* E, int target, char c) {
@@ -210,35 +193,7 @@ void buildMatrix(aNFAnode* E, int numStates, char c,  std::string** matrix) {
   }
 }
 
-// Is a given character in a given char class or not?
-bool inCharClass(char c, BitC_CharClass n) {
-  // Are there any ranges?
-  if(n.nranges == 0) {
-    return 0;
-  }
 
-  // Is this an "any"?
-  if(n.nranges == (size_t) -1) {
-    return c != '\0';
-  }
-
-  // Are we even looking for anything?
-  //  Prevents '\0' from being accepted by uninclusive charCrasses.
-  if(c == '\0') {
-    return 0;
-  }
-
-  // Look for character in all ranges
-  int success = !n.inclusive;
-  for (int i = 0; i < n.nranges; i++) {
-    for (int j = (int) n.ranges[i].from; j <=  (int) n.ranges[i].to; j++) {
-      if((int) c == j) {
-        return !success;
-      }
-    }
-  }
-  return success;
-}
 
 // Free all the transition matrices
 void freeMatrix(std::string** matrix, int mSize, int lSize) {
@@ -376,10 +331,10 @@ std::string* simulate(std::string regEx, std::string test_input) {
   while(is.get(curChar)) {
     for(int i = 0; i < lSize; i++) {
       if(language[i] == curChar) {
-        CharNr = i;
+        charNr = i;
       }
     }
-    update(S, numStates, allM + (CharNr*numStates*numStates));
+    update(S, numStates, allM + (charNr*numStates*numStates));
   }
 
 
