@@ -247,7 +247,7 @@ void update(std::string** S, const int numStates, std::string** m) {
       if (*(S[j]) != "na" && //Is there a path from j to i?
           (*m[j*numStates+i]) != "na" &&
           ((*newS[i]) == "na" || //Is it the lexicographically least?
-            S[j]->size() + m[j*numStates+i]->size() < newS[i]->size())) {
+            (*S[j]) + *(m[j*numStates+i]) < *(newS[i]))) {
 
         (*newS[i]) = *(S[j])+(*m[j*numStates+i]);
       }
@@ -269,7 +269,7 @@ void update(std::string** S, const int numStates, std::string** m) {
 // Takes regEx = a regular expression, and test_input = an input string.
 // Returns the lexicographically least bitstring,
 // representing a path through to the aNFA finishing state, while reading the input.
-std::string* simulate(std::string regEx, std::istream* input) {
+std::string* s_simulate(std::string regEx, std::istream* input) {
 
   // Parse the string-form regular expression, to the regular expression type BitC_Regex
   BitC_Regex *regex = NULL;

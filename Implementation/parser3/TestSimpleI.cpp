@@ -1,3 +1,4 @@
+#include "Simple_aNFASimulator.h"
 #include "Patricia_aNFASimulator.h"
 #include <string>
 #include <list>
@@ -33,7 +34,7 @@ testCase fillTC(std::string r, std::string i, std::string b) {
 }
 
 // A test, consisting of a list og testCases
-void newTest() {
+void newTest(char c) {
   std::list<testCase> cases;
   cases.push_back(fillTC("ac.*bc", "acbc", "1"));
   cases.push_back(fillTC("ac.*bc", "acbcbc", "001"));
@@ -91,7 +92,11 @@ void newTest() {
   for (std::list<testCase>::iterator it=cases.begin(); it != cases.end(); ++it) {
     std::istringstream is;
     is.str(it->input);
-    std::string tmp = *simulate(it->regex, &is);
+    std::string tmp;
+    if(c == 's')
+      tmp = *s_simulate(it->regex, &is);
+    else
+      tmp = *p_simulate(it->regex, &is);
     if (it->bitstring != tmp) {
       std::cout << "FAILED! At (regex, input): "
        << "(" << it->regex
@@ -132,8 +137,10 @@ int main() {
     
     std::istringstream is;
     is.str(input);
-    
-    result = simulate(regEx, &is);
+    if(c[1] == 's')
+      result = s_simulate(regEx, &is);
+    else
+      result = p_simulate(regEx, &is);
 
     std::cout << "Result: " << *result << std::endl;
     return 0;
@@ -143,9 +150,12 @@ int main() {
     }
     std::ifstream infile("test_input");
     if(infile.is_open()) {
-    
       clock_t time = clock();
-      std::string* result = simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
+      std::string* result;
+      if(c[2] == 's')
+        result = s_simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
+      else 
+        result = p_simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
       time = clock() - time;
       
       std::cout << "Result: " << *result << std::endl;
@@ -154,7 +164,7 @@ int main() {
     }
 
   } else {
-    newTest();
+    newTest(c[1]);
   }
   return 0;
 }

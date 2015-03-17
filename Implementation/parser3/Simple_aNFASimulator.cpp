@@ -41,7 +41,7 @@ void printMatrix(std::string** matrix, int numStates) {
 // Given the starting state/node of an aNFA, without state numbers, and the integer 0.
 // Gives numbers to each aNFAnode, that are unique within that aNFA.
 // Returns the total number of states (numStates)
-int addNr(aNFAnode* E, int nr) {
+static int addNr(aNFAnode* E, int nr) {
   //std::cout << "E->nr = " << E->nr << std::endl;
   if(E->nr == 0) {
     E->nr = nr++;
@@ -59,7 +59,7 @@ int addNr(aNFAnode* E, int nr) {
 // Find the aNFAnode with the statenumber n.
 // Given E = starting node of the aNFA,
 //  and d = the total number of aNFA states.
-aNFAnode* findN(aNFAnode* E, int n, int d) {
+static aNFAnode* findN(aNFAnode* E, int n, int d) {
   aNFAnode* ret;
   //std::cout << "Looking for " << n << std::endl;
   //std::cout << "Currently in " << E->nr << std::endl;
@@ -95,7 +95,7 @@ aNFAnode* findN(aNFAnode* E, int n, int d) {
 }
 
 // Is a given character in a given char class or not?
-bool inCharClass(char c, BitC_CharClass n) {
+static bool inCharClass(char c, BitC_CharClass n) {
   // Are there any ranges?
   if(n.nranges == 0) {
     return 0;
@@ -126,7 +126,7 @@ bool inCharClass(char c, BitC_CharClass n) {
 
 // Create the lexicographically least bitstring,
 //  representing a path from node E to 'target' in the aNFA and reading c on the way.
-std::string createString(aNFAnode* E, int target, char c) {
+static std::string createString(aNFAnode* E, int target, char c) {
 
   // Is this the node we are looking for?
   if(!c && E->nr == target) {
@@ -174,7 +174,7 @@ std::string createString(aNFAnode* E, int target, char c) {
 // Build the transition matrix for a specific character c
 // E is the initial node/state of the aNFA.
 // 'matrix' is a pointer to allocated space with room enough for the matrix.
-void buildMatrix(aNFAnode* E, int numStates, char c,  std::string** matrix) {
+static void buildMatrix(aNFAnode* E, int numStates, char c,  std::string** matrix) {
   std::string** retMat = matrix;
 
   // Set default values
@@ -196,7 +196,7 @@ void buildMatrix(aNFAnode* E, int numStates, char c,  std::string** matrix) {
 
 
 // Free all the transition matrices
-void freeMatrix(std::string** matrix, int mSize, int lSize) {
+static void freeMatrix(std::string** matrix, int mSize, int lSize) {
   for(int l = 0; l < lSize; l++) {
     for(int i = 0; i < mSize; i++) {
       for(int j = 0; j < mSize; j++) {
@@ -208,7 +208,7 @@ void freeMatrix(std::string** matrix, int mSize, int lSize) {
 }
 
 // Free all the nodes in aNFA
-void freeANFA(aNFAnode* node, int nr) {
+static void freeANFA(aNFAnode* node, int nr) {
   aNFAnode** nodes = (aNFAnode**) malloc(sizeof(aNFAnode*) * nr);
   for(int i = 0; i < nr; i++) {
     nodes[i] = findN(node, i, nr + 1);
@@ -220,7 +220,7 @@ void freeANFA(aNFAnode* node, int nr) {
 }
 
 // Print all possible bitstring-paths with input read so far
-void printPaths(std::string** S, int numStates) {
+static void printPaths(std::string** S, int numStates) {
   for (int i = 0; i < numStates; i++) {
     if (*(S[i]) != "na") {
       std::cout << "S[" << i << "] = " << *(S[i]) << "\n";
@@ -231,7 +231,7 @@ void printPaths(std::string** S, int numStates) {
 // Simulate reading a char.
 // Change S, the current set of paths reachable with the imput read so far.
 // numStates is the total number of states in the aNFA. and m is a transition matrix.
-void update(std::string** S, const int numStates, std::string** m) {
+static void update(std::string** S, const int numStates, std::string** m) {
 
   std::string** newS = (std::string**) malloc(sizeof(std::string) * numStates);
 
@@ -247,7 +247,7 @@ void update(std::string** S, const int numStates, std::string** m) {
       if (*(S[j]) != "na" && //Is there a path from j to i?
           (*m[j*numStates+i]) != "na" &&
           ((*newS[i]) == "na" || //Is it the lexicographically least?
-            S[j]->size() + m[j*numStates+i]->size() < newS[i]->size())) {
+            (*S[j]) + *(m[j*numStates+i]) < *(newS[i]))) {
 
         (*newS[i]) = *(S[j])+(*m[j*numStates+i]);
       }
@@ -269,7 +269,7 @@ void update(std::string** S, const int numStates, std::string** m) {
 // Takes regEx = a regular expression, and test_input = an input string.
 // Returns the lexicographically least bitstring,
 // representing a path through to the aNFA finishing state, while reading the input.
-std::string* simulate(std::string regEx, std::istream* input) {
+std::string* s_simulate(std::string regEx, std::istream* input) {
 
   // Parse the string-form regular expression, to the regular expression type BitC_Regex
   BitC_Regex *regex = NULL;

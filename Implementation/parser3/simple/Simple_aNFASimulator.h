@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <new>
-#include "../regex.h"
+#include "regex.h"
 
 
 // This is the header for our simple aNFA simulator.
