@@ -7,7 +7,11 @@
 #include "lex.h"
 #include "parser.h"
 #include "aNFAgen.h"
+#include <time.h>
 
+
+int cstringTime = 0;
+int insertPatTime = 0;
 
 // ============== This is a simple implementation of aNFA simulation ==================
 
@@ -115,8 +119,8 @@ struct patNode = {
 
 
 // Given a relations matrix and the number of states in the aNFA (the matrix dimentions).
-/* Prints the matrix, if numStates < 20.
-void printMatrix(std::string** matrix, int numStates) {
+// Prints the matrix, if numStates < 20.
+static void printMatrix(std::string** matrix, int numStates) {
   if(numStates < 20) {
     for(int i = 0; i < numStates; i++) {
       for(int j = 0; j < numStates; j++) {
@@ -131,7 +135,7 @@ void printMatrix(std::string** matrix, int numStates) {
     return;
   }
   std::cout << "The transition matrix is too large to be printed.\n";
-} */
+} 
 
 // Part of the aNFA construction process.
 // Given the starting state/node of an aNFA, without state numbers, and the integer 0.
@@ -329,32 +333,114 @@ std::string getString(patNode* node) {
   }
 
   return getString(node->parent) + *(node->bitstring);
+
 }
 
 // Simulate reading a char.
 // Change S, the current set of paths reachable with the imput read so far.
 // numStates is the total number of states in the aNFA. and m is a transition matrix.
-static void update(patNode** S, const int numStates, std::string** m) {
+void update(patNode** S, const int numStates, std::string** m) {
 
   patNode** newS = (patNode**) calloc(numStates, sizeof(patNode*));
-
+  std::string** appS = calloc(numStates, sizeof(std::string*));
+  for(int i = 0; i < numStates; i++) {
+    appS[i] = new std::string("na");
+  }
+  
   for (int i = 0; i < numStates; i++) {
     for (int j = 0; j < numStates; j++) {
+     int tbefore = clock();
      if (S[j] != NULL && //Is there a path from j to i?
           (*m[j*numStates+i]) != "na" &&
           (newS[i] == NULL || //Is it the lexicographically least?
-           getString(S[j]) + *m[j*numStates+i] < getString(newS[i]))) {
+           getString(S[j]) + *m[j*numStates+i] < getString(newS[i]) + *appS[i])) {
 
-        newS[i] = insertPat(S[j],m[j*numStates+i]);
+        newS[i] = S[j];
+        appS[i] = m[j*numStates+i];
       }
+      cstringTime += clock() - tbefore;
     }
   }
-
+  int tbefore = clock();
   for (int i = 0; i < numStates; i++) {
-        S[i] = newS[i];
+        S[i] = insertPat(newS[i], appS[i]);
   }
-
+  insertPatTime += clock() - tbefore;
+  free(appS);
   free(newS);
+}
+
+int existsIn(std::list<SS>* S, int n) {
+   for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
+    if(it->nr == n) {
+      return 1;
+    }
+   }
+   return 0;
+}
+
+SS* getSS(std::list<SS>* S, int n) {
+   for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
+    if(it->nr == n) {
+      SS* ret = &(*it);
+      return ret;
+    }
+   }
+   return NULL;
+}
+
+void update(std::list<SS>* S, const int numStates, std::string** m) {
+    std::list<SS> newS; // = new std::list<SS>();
+    std::string** ending = calloc(numStates, sizeof(std::string*));
+    int* prio = (int *) calloc(numStates, sizeof(int));
+    int adder = 0;
+    for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
+      for(int j = 0; j < numStates; j++) {
+        if((*m[it->nr*numStates+j]) != "na" && (it->prio <= prio[j] || prio[j] == 0)) {
+          if(it->prio +adder == prio[j]) {
+            if(*m[it->nr*numStates+j] < *ending[j]) {
+              SS* tmp = getSS(&newS, j);
+              tmp->node = it->node;
+              ending[j] = m[it->nr*numStates+j];
+              adder++;
+            }
+          } else {
+            SS* tmp = (SS*) malloc(sizeof(SS));
+            tmp->nr = j;
+            tmp->node = it->node;
+            tmp->prio = it->prio + adder;
+            ending[j] = m[it->nr*numStates+j];
+            newS.push_back(*tmp);
+            prio[j] = it->prio +adder;
+          }
+        }
+      }
+    }
+    
+     /* for(int i = 0; i < numStates; i++) {
+        for(int j = 0; j < numStates; j++) {
+          if((*m[i*numStates+j]) != "na" && it->nr == i) {
+            if(  !existsIn(&newS, j))) {
+              SS* tmp = (SS*) malloc(sizeof(SS));
+              tmp->nr = j;
+              tmp->node = insertPat(it->node, m[i*numStates+j]);
+              newS.push_back(*tmp);
+            } else {
+              if(it->prio 
+            }
+          }
+        }
+      }
+      //SS* tmp = it;
+      //free(tmp);
+    } */
+    for(std::list<SS>::iterator it=newS.begin(); it != newS.end(); ++it) {
+      /*std::cout << "Prio of newS: " << it->prio << "\n"; */
+      it->node = insertPat(it->node, ending[it->nr]);
+    }
+    
+    //delete S;
+    *S = newS;
 }
 
 
@@ -368,6 +454,9 @@ void freePat(patNode *node) {
   free(node);
 }
 
+bool compare_SS(const SS& s1, const SS& s2) {
+  return getString(s1.node) < getString(s2.node);
+}
 
 // Run aNFA simulation
 // Takes regEx = a regular expression, and test_input = an input string.
@@ -398,6 +487,8 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   for(size_t i = 0; i < language.size(); i++) {
     buildMatrix(initialState, numStates, language.at(i), allM + (i*numStates*numStates));
   }
+  
+  //printMatrix(allM, numStates);
 
   // Create S for the initial state (using transition matrix epsilon).
   // S[q] is the lexicographically least bitstring,
@@ -405,12 +496,38 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   patNode* root = (patNode*) calloc(1, sizeof(patNode));
   root->bitstring = new std::string("");
   
-  patNode** S = (patNode**) malloc(sizeof(patNode*) * numStates);
+  /*patNode** S = (patNode**) malloc(sizeof(patNode*) * numStates);
   for(int i = 0; i < numStates; i++) {
     std::string tmp = createString(initialState, i, '\0');
     S[i] = insertPat(root, &tmp);
-  }
+  }*/
 
+  std::list<SS>* S = new std::list<SS>();
+  //std::string** tmp = malloc(numStates * sizeof(std::string*));
+  for(int i = 0; i < numStates; i++) {
+    std::string tmp = createString(initialState, i, '\0');
+    //tmp[i] = new std::string();
+    //*tmp[i] = createString(initialState, i, '\0');
+    if(tmp != "na") {
+      SS* tmpSS = malloc(sizeof(SS));
+      tmpSS->nr = i;
+      tmpSS->node = insertPat(root, &tmp); 
+      S->push_back(*tmpSS);
+    }
+  }
+  S->sort(compare_SS);
+  int prio =1;
+  std::string last("");
+  for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
+    if(last == getString(it->node)) {
+      it->prio = prio;
+    } else {
+      it->prio = ++prio;
+      last = getString(it->node);
+    }
+    std::cout << getString(it->node) << " ";
+  }
+  std::cout << std::endl;
   // Print simulation arguments
   std::cout << "aNFA simulation:\n";
   std::cout << "regex = " << regEx << "\n";
@@ -438,6 +555,10 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   int lSize = language.size();
   int charNr;// placement in language and allM
   int i_nr = 0;
+  for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
+      std::cout << "(s=" << getString(it->node) << ",n=" << it->nr << ",p=" << it->prio << ") ";
+  }
+  std::cout << "\n";
   while(input->get(curChar)) {
     for(int i = 0; i < lSize; i++) {
       if(language[i] == curChar) {
@@ -445,17 +566,31 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
       }
     }
     update(S, numStates, allM + (charNr*numStates*numStates));
-    if(!(i_nr % 500)) {
-      std::cout << "Done " << i_nr << " input chars\n";
+    for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
+      std::cout << "(s=" << getString(it->node) << ",n=" << it->nr << ",p=" << it->prio << ") ";
     }
+    std::cout << "\n";
+    //S->sort(compare_SS);
+    if(!(i_nr % 500)) {
+      //std::cout << "Done " << i_nr << " input chars\n";
+    } 
     i_nr++;
   }
 
 
-  std::string* output = new std::string();
-  *output = getString(S[finishingState->nr]);
-
-  free(S);
+  std::string* output = new std::string("na");
+  //*output = getString(S[finishingState->nr]);
+  //std::cout << "cstring time: " << cstringTime << " iPatTime: " << insertPatTime << '\n';
+  for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
+    if(it->nr == finishingState->nr) {
+      //std::cout << "found output\n"; 
+      *output = getString(it->node);
+    }
+    //SS* tmp = it;
+    //free(tmp);
+  }
+  //free(S);
+  //delete S;
   freeANFA(initialState, numStates);
   freeMatrix(allM, numStates, language.size());
   freePat(root);

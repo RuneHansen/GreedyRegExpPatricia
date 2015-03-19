@@ -146,6 +146,7 @@ int main() {
     return 0;
   } else if (c[0] == 'p') {
     if(c[1] == 'g') {
+      std::cout << "Generating test data\n";
       genFile("abcdefghijklmnopqrstuvwxyz", 3000);
     }
     std::ifstream infile("test_input");

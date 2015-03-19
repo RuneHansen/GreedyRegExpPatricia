@@ -16,6 +16,11 @@ struct patNode {
   patNode* right;
 };
 
+struct SS {
+  int nr;
+  patNode* node;
+  int prio;
+};
 
 // regEx is the regular expression, test_input is the string we read
 std::string* p_simulate(std::string regEx, std::istream* input);
