@@ -1,0 +1,13 @@
+S. 27 i crash course
+
+Byt om på finishing og start state i generering, test
+-hvis positiv, arbejd videre
+
+Lav NFA generation om, start kan have vilkårlig, join kan have endeligt
+-husk alt oftest = 2, tror generelt
+
+Update
+Check listen baglæsns, arbejd med simpel først
+
+
+
