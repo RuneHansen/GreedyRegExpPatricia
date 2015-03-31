@@ -12,6 +12,7 @@
 struct patNode {
   patNode* parent;
   std::string* bitstring;
+  int active;
   patNode* left;
   patNode* right;
 };

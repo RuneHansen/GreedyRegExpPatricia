@@ -73,10 +73,14 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
       {
       aNFAnode* loop = aNFAnodeConstructor();
       aNFAnode* q = aNFAnodeConstructor();
+      aNFAnode* q2 = aNFAnodeConstructor();
+      q2->left = loop;
+      
       i->left = loop;
       loop->left = q;
+
       loop->right = f;
-      aNFAgen(E->sub1,q,loop, language);
+      aNFAgen(E->sub1,q,q2, language);
       break;
       }
     case BitC_RegexOp_Concat :
@@ -93,6 +97,20 @@ void aNFAgen(BitC_Regex* E, aNFAnode* i, aNFAnode* f, std::string* language) {
     }
     case BitC_RegexOp_Alt:
       {
+        if(E->nsub == 2) {
+          aNFAnode* s = aNFAnodeConstructor();
+          aNFAnode* q = aNFAnodeConstructor();
+          aNFAnode* s2 = aNFAnodeConstructor();
+          aNFAnode* q2 = aNFAnodeConstructor();
+          
+          i->left = s;
+          i->right = s2;
+          aNFAgen(E->subs[0], s, q, language);
+          aNFAgen(E->subs[0], s2, q2, language);
+          q->left = f;
+          q2->left = f;
+          
+        }
       aNFAnode* s = aNFAnodeConstructor();
       aNFAnode* q = aNFAnodeConstructor();
       aNFAnode* s2;

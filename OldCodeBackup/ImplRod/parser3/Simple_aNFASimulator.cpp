@@ -1,4 +1,4 @@
-#include "Patricia_aNFASimulator.h"
+#include "Simple_aNFASimulator.h"
 #include <string>
 #include <list>
 #include <iostream>
@@ -7,11 +7,7 @@
 #include "lex.h"
 #include "parser.h"
 #include "aNFAgen.h"
-#include <time.h>
 
-
-int cstringTime = 0;
-int insertPatTime = 0;
 
 // ============== This is a simple implementation of aNFA simulation ==================
 
@@ -22,105 +18,9 @@ int insertPatTime = 0;
 // 3. Create the transition matrices using the functions buildMatrix and createString.
 // 4. Run the simulation using the function update.
 
-//Insert postfix s at patricia trie node
-patNode* insertPat(patNode* node, std::string* s) {
-  if(*s == "na") {
-    return NULL;
-  }
-
-  if(*s == "") {
-    return node;
-  }
-
-  /*
-struct patNode = {
-  patNode* parent;
-  std::string bitstring;
-  patNode* left;
-  patNode* right;
-};
-*/
-
-  //What child does the string belong to
-  patNode *next = (*s)[0] == '1' ? node->right : node->left;
-
-  //Does the child already exist?
-  if(next == NULL) {
-    //std::cout << "Indsætter ny node\n";
-    next = (patNode*) calloc(1, sizeof(patNode));
-    next->bitstring = new std::string(*s);
-    next->left = NULL;
-    next->right = NULL;
-    next->parent = node;
-    return next;
-  }
-
-  //Is the childs string a prefix of the inserted string?
-  size_t length = s->length() < next->bitstring->length() ? next->bitstring->length() : s->length();
-
-  size_t i; //length of langest common prefix
-  for (i = 0; i < length; i++) {
-    if ((*s)[i] != next->bitstring->at(i)) {
-      break;
-    }
-  }
-
-  //they are identical
-  //return child
-  if (i == s->length() && s->length() == next->bitstring->length()) {
-    return next;
-  }
-
-  //child.bitstring is a prefix of s
-  //call insert on the child with remainder of s
-  if (i == next->bitstring->length() && next->bitstring->length() < s->length()) {
-    std::string tmp = s->substr(i);
-    return insertPat(next, &tmp);
-  }
-
-    patNode* next2 = (patNode*) calloc(1, sizeof(patNode));
-    next2->bitstring = new std::string(s->substr(0,i));
-    next2->left = NULL;
-    next2->right = NULL;
-    next2->parent = node;
-    *(next->bitstring) = next->bitstring->substr(i);
-    next->parent = next2;
-
-  //s is a prefix of child.bitstring
-  //new node with s as string and remainder og child.bitstring as child
-  if (i == s->length()) {
-    if (next->bitstring->at(0) == '0') {
-      next2->left = next;
-    } else {
-      next2->right = next;
-    }
-    return next2;
-  }
-
-  //they differ at some point
-  //new node with common prefix as string and remainder of each as children
-    patNode* next3 = (patNode*) calloc(1, sizeof(patNode));
-    next3->bitstring = new std::string(s->substr(i));
-    next3->left = NULL;
-    next3->right = NULL;
-    next3->parent = next2;
-
-    if (next->bitstring->at(0) == '0') {
-      next2->left = next;
-      next2->right = next3;
-    } else {
-      next2->right = next;
-      next2->left = next3;
-    }
-
-    return next3;
-}
-
-
-
 // Given a relations matrix and the number of states in the aNFA (the matrix dimentions).
 // Prints the matrix, if numStates < 20.
-static void printMatrix(std::string** matrix, int numStates) {
+void printMatrix(std::string** matrix, int numStates) {
   if(numStates < 20) {
     for(int i = 0; i < numStates; i++) {
       for(int j = 0; j < numStates; j++) {
@@ -135,7 +35,7 @@ static void printMatrix(std::string** matrix, int numStates) {
     return;
   }
   std::cout << "The transition matrix is too large to be printed.\n";
-} 
+}
 
 // Part of the aNFA construction process.
 // Given the starting state/node of an aNFA, without state numbers, and the integer 0.
@@ -214,7 +114,7 @@ static bool inCharClass(char c, BitC_CharClass n) {
 
   // Look for character in all ranges
   int success = !n.inclusive;
-  for (int i = 0; i < (int) n.nranges; i++) {
+  for (int i = 0; i < n.nranges; i++) {
     for (int j = (int) n.ranges[i].from; j <=  (int) n.ranges[i].to; j++) {
       if((int) c == j) {
         return !success;
@@ -230,12 +130,14 @@ static std::string createString(aNFAnode* E, int target, char c) {
 
   // Is this the node we are looking for?
   if(!c && E->nr == target) {
-    return "";
+    if((!E->c || E->charClass.nranges != 0) || E->left != NULL)
+      return "";
+    return "na";
   }
 
   // Can we pass through this node?
-  int comp = (((!E->input  || E->input == c) &&
-                E->charClass.nranges == 0)
+  int comp = ((!E->input  || E->input == c) &&
+                E->charClass.nranges == 0
               || inCharClass(c, E->charClass)) ;
   if(!comp) {
     return "na";
@@ -320,149 +222,56 @@ static void freeANFA(aNFAnode* node, int nr) {
 }
 
 // Print all possible bitstring-paths with input read so far
-/* void printPaths(std::string** S, int numStates) {
+static void printPaths(std::string** S, int numStates) {
   for (int i = 0; i < numStates; i++) {
     if (*(S[i]) != "na") {
       std::cout << "S[" << i << "] = " << *(S[i]) << "\n";
     }
   }
-} */
-std::string getString(patNode* node) {
-  if(node->parent == NULL) {
-    return "";
-  }
-
-  return getString(node->parent) + *(node->bitstring);
-
 }
 
 // Simulate reading a char.
 // Change S, the current set of paths reachable with the imput read so far.
 // numStates is the total number of states in the aNFA. and m is a transition matrix.
-void update(patNode** S, const int numStates, std::string** m) {
+static void update(std::string** S, const int numStates, std::string** m) {
 
-  patNode** newS = (patNode**) calloc(numStates, sizeof(patNode*));
-  std::string** appS = calloc(numStates, sizeof(std::string*));
+  std::string** newS = (std::string**) malloc(sizeof(std::string) * numStates);
+
   for(int i = 0; i < numStates; i++) {
-    appS[i] = new std::string("na");
+    std::string* tmp = new std::string();
+    newS[i] = tmp;
   }
-  
+
   for (int i = 0; i < numStates; i++) {
+    (*newS[i]) = "na";
     for (int j = 0; j < numStates; j++) {
-     int tbefore = clock();
-     if (S[j] != NULL && //Is there a path from j to i?
+
+      if (*(S[j]) != "na" && //Is there a path from j to i?
           (*m[j*numStates+i]) != "na" &&
-          (newS[i] == NULL || //Is it the lexicographically least?
-           getString(S[j]) + *m[j*numStates+i] < getString(newS[i]) + *appS[i])) {
+          ((*newS[i]) == "na" || //Is it the lexicographically least?
+            (*S[j]) + *(m[j*numStates+i]) < *(newS[i]))) {
 
-        newS[i] = S[j];
-        appS[i] = m[j*numStates+i];
+        (*newS[i]) = *(S[j])+(*m[j*numStates+i]);
       }
-      cstringTime += clock() - tbefore;
     }
   }
-  int tbefore = clock();
+
   for (int i = 0; i < numStates; i++) {
-        S[i] = insertPat(newS[i], appS[i]);
+        *(S[i]) = (*newS[i]);
   }
-  insertPatTime += clock() - tbefore;
-  free(appS);
+
+  for(int i = 0; i < numStates; i++) {
+    delete newS[i];
+  }
+
   free(newS);
-}
-
-int existsIn(std::list<SS>* S, int n) {
-   for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
-    if(it->nr == n) {
-      return 1;
-    }
-   }
-   return 0;
-}
-
-SS* getSS(std::list<SS>* S, int n) {
-   for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
-    if(it->nr == n) {
-      SS* ret = &(*it);
-      return ret;
-    }
-   }
-   return NULL;
-}
-
-void update(std::list<SS>* S, const int numStates, std::string** m) {
-    std::list<SS> newS; // = new std::list<SS>();
-    std::string** ending = calloc(numStates, sizeof(std::string*));
-    int* prio = (int *) calloc(numStates, sizeof(int));
-    int adder = 0;
-    for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
-      for(int j = 0; j < numStates; j++) {
-        if((*m[it->nr*numStates+j]) != "na" && (it->prio <= prio[j] || prio[j] == 0)) {
-          if(it->prio +adder == prio[j]) {
-            if(*m[it->nr*numStates+j] < *ending[j]) {
-              SS* tmp = getSS(&newS, j);
-              tmp->node = it->node;
-              ending[j] = m[it->nr*numStates+j];
-              adder++;
-            }
-          } else {
-            SS* tmp = (SS*) malloc(sizeof(SS));
-            tmp->nr = j;
-            tmp->node = it->node;
-            tmp->prio = it->prio + adder;
-            ending[j] = m[it->nr*numStates+j];
-            newS.push_back(*tmp);
-            prio[j] = it->prio +adder;
-          }
-        }
-      }
-    }
-    
-     /* for(int i = 0; i < numStates; i++) {
-        for(int j = 0; j < numStates; j++) {
-          if((*m[i*numStates+j]) != "na" && it->nr == i) {
-            if(  !existsIn(&newS, j))) {
-              SS* tmp = (SS*) malloc(sizeof(SS));
-              tmp->nr = j;
-              tmp->node = insertPat(it->node, m[i*numStates+j]);
-              newS.push_back(*tmp);
-            } else {
-              if(it->prio 
-            }
-          }
-        }
-      }
-      //SS* tmp = it;
-      //free(tmp);
-    } */
-    for(std::list<SS>::iterator it=newS.begin(); it != newS.end(); ++it) {
-      /*std::cout << "Prio of newS: " << it->prio << "\n"; */
-      it->node = insertPat(it->node, ending[it->nr]);
-    }
-    
-    //delete S;
-    *S = newS;
-}
-
-
-void freePat(patNode *node) {
-  if (node->left != NULL) {
-    freePat(node->left);
-  }
-  if (node->right != NULL) {
-    freePat(node->right);
-  }
-  free(node);
-}
-
-bool compare_SS(const SS& s1, const SS& s2) {
-  return getString(s1.node) < getString(s2.node);
 }
 
 // Run aNFA simulation
 // Takes regEx = a regular expression, and test_input = an input string.
 // Returns the lexicographically least bitstring,
 // representing a path through to the aNFA finishing state, while reading the input.
-std::string* p_simulate(std::string regEx, std::istream* input) {
+std::string* s_simulate(std::string regEx, std::istream* input) {
 
   // Parse the string-form regular expression, to the regular expression type BitC_Regex
   BitC_Regex *regex = NULL;
@@ -477,64 +286,33 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   aNFAnode* finishingState = aNFAnodeConstructor();
   aNFAgen(regex, initialState, finishingState, &language);
 
-  
   // Add state numbers. numStates is the total number of states.
   int numStates = addNr(initialState, 0);
 
   // Create transition matrices. allM contains all the transition matrices.
   std::string** allM = (std::string**) malloc(numStates * numStates *
                              language.size() * sizeof(std::string*));
-  for(size_t i = 0; i < language.size(); i++) {
+  for(int i = 0; i < language.size(); i++) {
     buildMatrix(initialState, numStates, language.at(i), allM + (i*numStates*numStates));
   }
-  
-  //printMatrix(allM, numStates);
 
   // Create S for the initial state (using transition matrix epsilon).
   // S[q] is the lexicographically least bitstring,
   //  representing a path through the aNFA to state q, using the input read so far.
-  patNode* root = (patNode*) calloc(1, sizeof(patNode));
-  root->bitstring = new std::string("");
-  
-  /*patNode** S = (patNode**) malloc(sizeof(patNode*) * numStates);
+  std::string** S = (std::string**) malloc(sizeof(std::string*) * numStates);
   for(int i = 0; i < numStates; i++) {
-    std::string tmp = createString(initialState, i, '\0');
-    S[i] = insertPat(root, &tmp);
-  }*/
+    S[i] = new std::string();
+    *S[i] = createString(initialState, i, '\0');
+  }
 
-  std::list<SS>* S = new std::list<SS>();
-  //std::string** tmp = malloc(numStates * sizeof(std::string*));
-  for(int i = 0; i < numStates; i++) {
-    std::string tmp = createString(initialState, i, '\0');
-    //tmp[i] = new std::string();
-    //*tmp[i] = createString(initialState, i, '\0');
-    if(tmp != "na") {
-      SS* tmpSS = malloc(sizeof(SS));
-      tmpSS->nr = i;
-      tmpSS->node = insertPat(root, &tmp); 
-      S->push_back(*tmpSS);
-    }
-  }
-  S->sort(compare_SS);
-  int prio =1;
-  std::string last("");
-  for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
-    if(last == getString(it->node)) {
-      it->prio = prio;
-    } else {
-      it->prio = ++prio;
-      last = getString(it->node);
-    }
-    std::cout << getString(it->node) << " ";
-  }
-  std::cout << std::endl;
   // Print simulation arguments
   std::cout << "aNFA simulation:\n";
   std::cout << "regex = " << regEx << "\n";
   //std::cout << "input = " << test_input << "\n";
 
-  /* Test input validity 
-  for (size_t i = 0; i < test_input.length(); i++) {
+  /*
+  // Test input validity
+  for (int i = 0; i < test_input.length(); i++) {
     if (language.find(test_input[i]) == std::string::npos) {
         std::cout << "INVALID INPUT!\n";
         std::cout << "Change the std::string test_input in main().\n";
@@ -545,20 +323,14 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     }
   }
 
-  Convert input string to a stream.
+  // Convert input string to a stream.
   std::istringstream is;
   is.str(test_input);
   */
-  
   // Run simulation
   char curChar;
   int lSize = language.size();
   int charNr;// placement in language and allM
-  int i_nr = 0;
-  for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
-      std::cout << "(s=" << getString(it->node) << ",n=" << it->nr << ",p=" << it->prio << ") ";
-  }
-  std::cout << "\n";
   while(input->get(curChar)) {
     for(int i = 0; i < lSize; i++) {
       if(language[i] == curChar) {
@@ -566,43 +338,27 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
       }
     }
     update(S, numStates, allM + (charNr*numStates*numStates));
-    for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
-      std::cout << "(s=" << getString(it->node) << ",n=" << it->nr << ",p=" << it->prio << ") ";
-    }
-    std::cout << "\n";
-    //S->sort(compare_SS);
-    if(!(i_nr % 500)) {
-      //std::cout << "Done " << i_nr << " input chars\n";
-    } 
-    i_nr++;
   }
 
 
-  std::string* output = new std::string("na");
-  //*output = getString(S[finishingState->nr]);
-  //std::cout << "cstring time: " << cstringTime << " iPatTime: " << insertPatTime << '\n';
-  for (std::list<SS>::iterator it=S->begin(); it != S->end(); ++it) {
-    if(it->nr == finishingState->nr) {
-      //std::cout << "found output\n"; 
-      *output = getString(it->node);
-    }
-    //SS* tmp = it;
-    //free(tmp);
+  std::string* output = new std::string();
+  *output = *S[finishingState->nr];
+
+  // Free memory
+  for(int i = 0; i < numStates; i++) {
+    delete S[i];
   }
-  //free(S);
-  //delete S;
+  free(S);
   freeANFA(initialState, numStates);
   freeMatrix(allM, numStates, language.size());
-  freePat(root);
 
   return output;
 }
 
 
-
 // Find longest prefix common to all strings in the list,
 // remove the prefix from all strings in the list and return the prefix.
-/*std::string split(std::string** S, int numStates) {
+std::string split(std::string** S, int numStates) {
 
   // The index of the characters we are comparing
   int cInd = 0;
@@ -652,4 +408,4 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
 
   // Return the longest common prefix
   return prefix;
-} */
+}
