@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <new>
-#include "regex.h"
+#include "../regex.h"
 
 
 // This is the header for our simple aNFA simulator.
@@ -12,20 +12,10 @@
 struct patNode {
   patNode* parent;
   std::string* bitstring;
-  int active;
   patNode* left;
   patNode* right;
 };
 
-struct SS {
-  int nr;
-  patNode* node;
-};
-
-struct PS {
-  int nr;
-  std::string* string;
-};
 
 // regEx is the regular expression, test_input is the string we read
 std::string* p_simulate(std::string regEx, std::istream* input);
