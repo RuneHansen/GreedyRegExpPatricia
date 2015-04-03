@@ -26,6 +26,7 @@ HEADERS=\
 	regex.h\
   Simple_aNFASimulator.h\
   Patricia_aNFASimulator.h\
+  tranMatrix.h\
   aNFAgen.h
 
 OBJECTS=\
@@ -34,6 +35,7 @@ OBJECTS=\
 	obj/lex.o\
   obj/Simple_aNFASimulator.o\
   obj/Patricia_aNFASimulator.o\
+  obj/tranMatrix.o\
   obj/aNFAgen.o
 
 # Code generation
