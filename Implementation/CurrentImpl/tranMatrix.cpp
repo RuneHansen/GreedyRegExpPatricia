@@ -35,10 +35,8 @@ void printMatrix(std::string** matrix, int numStates) {
 // Gives numbers to each aNFAnode, that are unique within that aNFA.
 // Returns the total number of states (numStates)
 int addNr(aNFAnode* E, int nr) {
-  //std::cout << "E->nr = " << E->nr << std::endl;
   if(E->nr == 0) {
     E->nr = nr++;
-    //std::cout << "Nr: " << nr << ", E->nr: " << E->nr << "\n";
     if(E->right != NULL) {
       return addNr(E->right, addNr(E->left, nr));
     }
@@ -54,11 +52,8 @@ int addNr(aNFAnode* E, int nr) {
 //  and d = the total number of aNFA states.
 aNFAnode* findN(aNFAnode* E, int n, int d) {
   aNFAnode* ret;
-  //std::cout << "Looking for " << n << std::endl;
-  //std::cout << "Currently in " << E->nr << std::endl;
 
   if(E->nr == n) {
-    //std::cout << "Found it\n";
     return E;
   }
   if(d == 0) {
@@ -67,13 +62,11 @@ aNFAnode* findN(aNFAnode* E, int n, int d) {
 
   if(E->nr != n && E->right != NULL) {
     if(rand() % 2) {
-      //std::cout << "Took zero\n";
       ret = findN(E->right, n, d-1);
       if(ret->nr != n)
         return findN(E->left, n, d-1);
       return ret;
     } else {
-      //std::cout << "Took one\n";
       ret = findN(E->left, n, d-1);
       if(ret->nr != n)
         return findN(E->right, n, d-1);

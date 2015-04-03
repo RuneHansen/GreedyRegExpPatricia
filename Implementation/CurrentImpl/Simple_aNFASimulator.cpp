@@ -95,7 +95,7 @@ std::string* s_simulate(std::string regEx, std::istream* input) {
   }
   printMatrix(allM, numStates);
 
-  // Create S for the initial state (using transition matrix epsilon).
+  // Create S for the initial state
   // S[q] is the lexicographically least bitstring,
   //  representing a path through the aNFA to state q, using the input read so far.
   std::string** S = (std::string**) malloc(sizeof(std::string*) * numStates);
@@ -107,25 +107,7 @@ std::string* s_simulate(std::string regEx, std::istream* input) {
   // Print simulation arguments
   std::cout << "aNFA simulation:\n";
   std::cout << "regex = " << regEx << "\n";
-  //std::cout << "input = " << test_input << "\n";
 
-  /*
-  // Test input validity
-  for (int i = 0; i < test_input.length(); i++) {
-    if (language.find(test_input[i]) == std::string::npos) {
-        std::cout << "INVALID INPUT!\n";
-        std::cout << "Change the std::string test_input in main().\n";
-        std::cout << "Input must be valid for the regular expression.\n";
-        std::cout << "Simulation canceled.\n";
-        std::string* r = new std::string("Invalid input");
-        return r;
-    }
-  }
-
-  // Convert input string to a stream.
-  std::istringstream is;
-  is.str(test_input);
-  */
   // Run simulation
   char curChar;
   int lSize = language.size();

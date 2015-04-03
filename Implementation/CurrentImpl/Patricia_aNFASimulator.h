@@ -17,12 +17,14 @@ struct patNode {
   patNode* right;
 };
 
-struct SS {
+//Contains an active state nr and its patricia node representation
+struct activeStatePath {
   int nr;
   patNode* node;
 };
 
-struct PS {
+// Contains the transition path to nr by string
+struct transitionPath {
   int nr;
   std::string* string;
 };
