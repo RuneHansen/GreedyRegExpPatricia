@@ -6,6 +6,8 @@
 #include <sstream>
 #include <fstream>
 #include <time.h>
+#include <sys/time.h>
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -123,49 +125,98 @@ void genFile(std::string language, size_t size) {
 // Takes arguments from user, or runs the test suite
 int main() {
   char c[10];
-  std::cout << "Testset (t), performance(p) or input (i): ";
+  std::cout << "Unittest(u), performance(p), input (i) or quit(q): ";
   std::cin.getline( c, 10);
 
-  if(c[0] == 'i') {
-    std::string* result;
-    char input[100];
-    char regEx[100];
-    std::cout << "Regex: \n";
-    std::cin.getline(regEx, 100);
-    std::cout << "Input:\n";
-    std::cin.getline(input, 100);
-    
-    std::istringstream is;
-    is.str(input);
-    if(c[1] == 's')
-      result = s_simulate(regEx, &is);
-    else
-      result = p_simulate(regEx, &is);
-
-    std::cout << "Result: " << *result << std::endl;
-    return 0;
-  } else if (c[0] == 'p') {
-    if(c[1] == 'g') {
-      std::cout << "Generating test data\n";
-      genFile("abcdefghijklmnopqrstuvwxyz", 3000000);
-    }
-    std::ifstream infile("test_input");
-    if(infile.is_open()) {
-      clock_t time = clock();
+  while(c[0] != 'q') {
+    if(c[0] == 'i') {
       std::string* result;
-      if(c[2] == 's')
-        result = s_simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
-      else 
-        result = p_simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
-      time = clock() - time;
+      char input[100];
+      char regEx[100];
+      std::cout << "Regex: \n";
+      std::cin.getline(regEx, 100);
+      std::cout << "Input:\n";
+      std::cin.getline(input, 100);
       
-      //std::cout << "Result: " << *result << std::endl;
-      std::cout << "Time: " <<  ((double) time / CLOCKS_PER_SEC) << std::endl;
-      infile.close();
-    }
+      std::istringstream is;
+      is.str(input);
+      struct timeval time;
+      gettimeofday(&time, NULL);
+      long timeP = time.tv_sec * 1000 + time.tv_usec / 1000;
 
-  } else {
-    newTest(c[1]);
+      if(c[1] == 's') {
+        result = s_simulate(regEx, &is);
+      } else {
+        result = p_simulate(regEx, &is);
+      }
+      gettimeofday(&time, NULL);
+      timeP = (time.tv_sec * 1000 + time.tv_usec / 1000) - timeP;
+
+      
+      std::cout << "Result: " << *result << ", time: " << ((double) timeP / 1000) << std::endl;
+    } else if (c[0] == 'p') {
+      std::cout << "Input size: 3k(1), 30k(2), 300k(3)\n";
+      std::cin.getline(c, 10);
+      if(c[0] == '1') {
+        std::cout << "Generating test data\n";
+        genFile("abcdefghijklmnopqrstuvwxyz", 3000);
+      }
+      if(c[0] == '2') {
+        std::cout << "Generating test data\n";
+        genFile("abcdefghijklmnopqrstuvwxyz", 30000);
+      }
+      if(c[0] == '3') {
+        std::cout << "Generating test data\n";
+        genFile("abcdefghijklmnopqrstuvwxyz", 300000);
+      }
+      std::cout << "Compare implementations? y/n\n";
+      std::cin.getline(c, 10);
+      
+
+      
+      std::ifstream infile2;
+      std::string* result;
+      long timeS = 0;
+      long timeP = 0;
+      struct timeval time;
+        
+      std::ifstream infile("test_input");
+      if(infile.is_open()) {
+        gettimeofday(&time, NULL);
+        timeP = time.tv_sec * 1000 + time.tv_usec / 1000;
+        
+        result = p_simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
+        
+        gettimeofday(&time, NULL);
+        timeP = (time.tv_sec * 1000 + time.tv_usec / 1000) - timeP;
+        
+        infile.close();
+      }
+      if(c[0] == 'y' || c[0] == 'Y') {
+        std::ifstream infile("test_input");
+          if(infile.is_open()) {
+            gettimeofday(&time, NULL);
+            timeS = time.tv_sec * 1000 + time.tv_usec / 1000;
+          
+            result = s_simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
+            
+            gettimeofday(&time, NULL);
+            timeS = (time.tv_sec * 1000 + time.tv_usec / 1000) - timeS;
+            infile.close();
+          }
+        }
+        
+        //std::cout << "Result: " << *result << std::endl;
+        std::cout << "Time for patricia: " <<  timeP << "ms\n";
+        if(timeS != 0) {
+          std::cout << "Time for simple: " <<  timeS << "ms\n";          
+        }
+    } else {
+      newTest(c[1]);
+    }
+    std::cout << "unit(u), performance(p), input (i) or quit(q): ";
+    std::cin.getline( c, 10);
   }
+  
   return 0;
 }

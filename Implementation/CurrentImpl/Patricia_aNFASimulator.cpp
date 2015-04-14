@@ -361,7 +361,7 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   S->sort(compare_activeStatePath);
 
   // Print simulation arguments
-  std::cout << "aNFA simulation:\n";
+  std::cout << "Patricia aNFA simulation:\n";
   std::cout << "regex = " << regEx << "\n";
   
   // Run simulation
@@ -417,7 +417,7 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   } else {
     *output += check;
   }
-  std::cout << "Total duration of triple loop " << (double) totalTime / 1000 << std::endl;
+  //std::cout << "Total duration of triple loop " << (double) totalTime / 1000 << std::endl;
   
   //Freeing memory
   //free(S);
