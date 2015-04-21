@@ -27,17 +27,14 @@ int insertPatTime = 0;
 patNode* insertPat(patNode* node, std::string* s) {
   //std::cout << "Called insertPat\n";
   
-  if(s == NULL || *s == "na") {
+  if(s == NULL || *s == "na" || node == NULL) {
+    std::cout << "inesertPat returned NULL\n";
     return NULL;
   }
 
   if(*s == "") {
     node->active = 1;
     return node;
-  }
-  
-  if(node == NULL) {
-    return NULL;
   }
 
   patNode *oldSuffix = (*s)[0] == '1' ? node->right : node->left;
@@ -189,26 +186,30 @@ std::string getStringFromPat(patNode* node) {
 }
 
 //If the root only has one child, it will output the longest common prefix
-std::string split(patNode* node) {
-  if(node->active) {
+std::string split(patNode** node) {
+  if((*node)->active) {
     return "";
   }
-  if(node->left == NULL && node->right != NULL) {
-    node->right->parent = NULL;
-    std::string ret = *(node->right->bitstring);
-    *(node->right->bitstring) = "";
-    patNode* tmp = node;
-    node = tmp->right;
+  if((*node)->left == NULL && (*node)->right != NULL) {
+    (*node)->right->parent = NULL;
+    std::string ret = *((*node)->right->bitstring);
+    *((*node)->right->bitstring) = "";
+    patNode* tmp = *node;
+    
+    *node = (*node)->right;
+    
     delete tmp->bitstring;
     free(tmp);
     return ret;
   }
-  if(node->right == NULL && node->left != NULL) {
-    node->left->parent = NULL;
-    std::string ret = *(node->left->bitstring);
-    *(node->left->bitstring) = "";
-    patNode* tmp = node;
-    node = tmp->left;
+  if((*node)->right == NULL && (*node)->left != NULL) {
+    (*node)->left->parent = NULL;
+    std::string ret = *((*node)->left->bitstring);
+    *((*node)->left->bitstring) = "";
+    patNode* tmp = *node;
+
+    *node = (*node)->left;
+
     delete tmp->bitstring;
     free(tmp);
     return ret;
@@ -361,7 +362,7 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   // representing the lexicographically least path through the aNFA to 
   // state q, using the input read so far.
   patNode* root = (patNode*) calloc(1, sizeof(patNode));
-  root->active = 1;
+  //root->active = 1;
   root->bitstring = new std::string("");
 
   std::cout << "Making S\n";
@@ -371,9 +372,7 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     if(tmp != "na") {
       activeStatePath* newActiveStatePath = malloc(sizeof(activeStatePath));
       newActiveStatePath->nr = i;
-      std::cout << "Inserting pat\n";
       newActiveStatePath->node = insertPat(root, &tmp); 
-      std::cout << "Pat inserted\n";
       S->push_back(*newActiveStatePath);
     }
   }
@@ -403,14 +402,11 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
         charNr = i;
       }
     }
-    
     update(S, numStates, newM + (charNr*numStates));
 
     cleanUp(root);
     
-    std::cout << "Doing split\n";
-    *output += split(root);
-    std::cout << "Done split\n";
+    *output += split(&root);
     
     /*
     for (std::list<activeStatePath>::iterator it=S->begin(); it != S->end(); ++it) {
