@@ -49,12 +49,17 @@ patNode* insertPat(patNode* node, std::string* s) {
     oldSuffix->right = NULL;
     oldSuffix->active = 1;
     oldSuffix->parent = node;
+    if((*s)[0] == '1') {
+      node->right = oldSuffix;
+    } else {
+      node->left = oldSuffix;
+    }
     return oldSuffix;
   }
   
   int isSame, isPrefix, isPostfix, isMixed;
   
-  size_t length = s->length() < oldSuffix->bitstring->length() ? oldSuffix->bitstring->length() : s->length();
+  size_t length = s->length() < oldSuffix->bitstring->length() ? s->length() : oldSuffix->bitstring->length();
 
   size_t i; //length of langest common prefix
   for (i = 0; i < length; i++) {
@@ -73,7 +78,7 @@ patNode* insertPat(patNode* node, std::string* s) {
 
   //they are identical
   //return child
-  if (i == s->length() && s->length() == oldSuffix->bitstring->length()) {
+  if (isSame) {
     oldSuffix->active = 1;
     return oldSuffix;
   }
@@ -90,6 +95,11 @@ patNode* insertPat(patNode* node, std::string* s) {
     commonPrefix->left = NULL;
     commonPrefix->right = NULL;
     commonPrefix->parent = node;
+    if(commonPrefix->bitstring->at(0) == '0') {
+      node->left = commonPrefix;
+    } else {
+      node->right = commonPrefix;
+    }
     *(oldSuffix->bitstring) = oldSuffix->bitstring->substr(i);
     oldSuffix->parent = commonPrefix;
 
@@ -180,6 +190,9 @@ std::string getStringFromPat(patNode* node) {
 
 //If the root only has one child, it will output the longest common prefix
 std::string split(patNode* node) {
+  if(node->active) {
+    return "";
+  }
   if(node->left == NULL && node->right != NULL) {
     node->right->parent = NULL;
     std::string ret = *(node->right->bitstring);
@@ -212,7 +225,7 @@ void cleanUp(patNode* node) {
   if(node->right != NULL) {
     cleanUp(node->right);
   }
-  if(node->active) {
+  if(node->active || node->parent == NULL) {
     return;
   }
   if(node->left == NULL && node->right == NULL) {
@@ -223,6 +236,7 @@ void cleanUp(patNode* node) {
     }
     delete node->bitstring;
     free(node);
+    return;
   }
   if(node->left != NULL && node->right == NULL) {
     *(node->left->bitstring) = *(node->bitstring) + *(node->left->bitstring);
@@ -234,6 +248,7 @@ void cleanUp(patNode* node) {
     }
     delete node->bitstring;
     free(node);
+    return;
   }
   if (node->right != NULL && node->left == NULL) {
     *(node->right->bitstring) = *(node->bitstring) + *(node->right->bitstring);
@@ -245,6 +260,7 @@ void cleanUp(patNode* node) {
     }
     delete node->bitstring;
     free(node);
+    return;
   }
 }
 
@@ -348,13 +364,16 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   root->active = 1;
   root->bitstring = new std::string("");
 
+  std::cout << "Making S\n";
   std::list<activeStatePath>* S = new std::list<activeStatePath>();
   for(int i = 0; i < numStates; i++) {
     std::string tmp = createString(initialState, i, '\0');
     if(tmp != "na") {
       activeStatePath* newActiveStatePath = malloc(sizeof(activeStatePath));
       newActiveStatePath->nr = i;
+      std::cout << "Inserting pat\n";
       newActiveStatePath->node = insertPat(root, &tmp); 
+      std::cout << "Pat inserted\n";
       S->push_back(*newActiveStatePath);
     }
   }
@@ -386,9 +405,12 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     }
     
     update(S, numStates, newM + (charNr*numStates));
-    root->active = 1;
+
     cleanUp(root);
+    
+    std::cout << "Doing split\n";
     *output += split(root);
+    std::cout << "Done split\n";
     
     /*
     for (std::list<activeStatePath>::iterator it=S->begin(); it != S->end(); ++it) {
@@ -399,7 +421,6 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     i_nr++;
   }
 
-
   //Find last part of output, if it does not exist, return "na"
   std::string check = "na";
   for (std::list<activeStatePath>::iterator it=S->begin(); it != S->end(); ++it) {
@@ -407,6 +428,8 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
       patNode* node = it->node;
       check = "";
       while(node != NULL) {
+        //std::cout << "Left: " << node->left << " right: " << node->right << std::endl;
+        //std::cout << "Parent : " << node->parent << std::endl;
         check = *node->bitstring + check;
         node = node->parent;
       }
@@ -425,6 +448,6 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   freeANFA(initialState, numStates);
   freeMatrix(allM, numStates, alphabet.size());
   freePat(root);
-
+  std::cout << "Done\n";
   return output;
 }

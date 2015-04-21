@@ -167,7 +167,7 @@ int main() {
       }
       if(c[0] == '3') {
         std::cout << "Generating test data\n";
-        genFile("abcdefghijklmnopqrstuvwxyz", 300000);
+        genFile("abcdefghijklmnopqrstuvwxyz", 3000000);
       }
       std::cout << "Compare implementations? y/n\n";
       std::cin.getline(c, 10);
