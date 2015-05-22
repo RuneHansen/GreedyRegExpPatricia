@@ -105,8 +105,8 @@ std::string* s_simulate(std::string regEx, std::istream* input) {
   }
 
   // Print simulation arguments
-  std::cout << "Simple aNFA simulation:\n";
-  std::cout << "regex = " << regEx << "\n";
+  /*std::cout << "Simple aNFA simulation:\n";
+  std::cout << "regex = " << regEx << "\n";*/
 
   // Run simulation
   char curChar;

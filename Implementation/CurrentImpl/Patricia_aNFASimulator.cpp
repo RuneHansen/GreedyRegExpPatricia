@@ -240,26 +240,30 @@ void cleanUp(patNode* node) {
     return;
   }
   if(node->left != NULL && node->right == NULL) {
-    *(node->left->bitstring) = *(node->bitstring) + *(node->left->bitstring);
+    *(node->bitstring) += *(node->left->bitstring);
+    delete node->left->bitstring;
+    node->left->bitstring = node->bitstring;
+    node->bitstring = NULL;
     node->left->parent = node->parent;
     if(node->parent->left == node) {
       node->parent->left = node->left;
     } else {
       node->parent->right = node->left;
     }
-    delete node->bitstring;
     free(node);
     return;
   }
   if (node->right != NULL && node->left == NULL) {
-    *(node->right->bitstring) = *(node->bitstring) + *(node->right->bitstring);
+    *(node->bitstring) += *(node->right->bitstring);
+    delete node->right->bitstring;
+    node->right->bitstring = node->bitstring;
+    node->bitstring = NULL;
     node->right->parent = node->parent;
     if(node->parent->right == node) {
       node->parent->right = node->right;
     } else {
       node->parent->left = node->right;
     }
-    delete node->bitstring;
     free(node);
     return;
   }
@@ -288,6 +292,7 @@ void update(std::list<activeStatePath>* S, const int numStates, std::list<transi
             newS.push_back(*tmp);
         }
       }
+      //free(&it);
     }
     
     free(found);
@@ -302,6 +307,7 @@ void freePat(patNode *node) {
   if (node->right != NULL) {
     freePat(node->right);
   }
+  delete node->bitstring;
   free(node);
 }
 
@@ -365,7 +371,7 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   //root->active = 1;
   root->bitstring = new std::string("");
 
-  std::cout << "Making S\n";
+
   std::list<activeStatePath>* S = new std::list<activeStatePath>();
   for(int i = 0; i < numStates; i++) {
     std::string tmp = createString(initialState, i, '\0');
@@ -379,8 +385,8 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   S->sort(compare_activeStatePath);
 
   // Print simulation arguments
-  std::cout << "Patricia aNFA simulation:\n";
-  std::cout << "regex = " << regEx << "\n";
+  /*std::cout << "Patricia aNFA simulation:\n";
+  std::cout << "regex = " << regEx << "\n"; */
   
   // Run simulation
   char curChar;
@@ -394,9 +400,14 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   */
   
   std::string* output = new std::string("");
-  
+
   // Reading one character at a time, do update, cleanup and split
   while(input->get(curChar)) {
+    /*if(S->size() == 0) {
+      std::cout << "Stopped before end\n";
+      *output = "na";
+      return output;
+    }*/
     for(int i = 0; i < lSize; i++) {
       if(alphabet[i] == curChar) {
         charNr = i;
@@ -405,7 +416,7 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     update(S, numStates, newM + (charNr*numStates));
 
     cleanUp(root);
-    
+
     *output += split(&root);
     
     /*
@@ -439,11 +450,12 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   //std::cout << "Total duration of triple loop " << (double) totalTime / 1000 << std::endl;
   
   //Freeing memory
+  //std::cout << "Freeing memory\n";
   //free(S);
   //delete S;
   freeANFA(initialState, numStates);
   freeMatrix(allM, numStates, alphabet.size());
   freePat(root);
-  std::cout << "Done\n";
+  //std::cout << "Done\n";
   return output;
 }

@@ -35,6 +35,36 @@ testCase fillTC(std::string r, std::string i, std::string b) {
   return ret;
 }
 
+int performanceTest(std::string regex, int times, std::string file, int ver) {
+  long avarage = 0;
+  
+  std::string* result;
+  long timeS;
+  struct timeval time;
+  for(int i = 0; i < times; i++) {
+    std::ifstream infile(file);
+    if(infile.is_open()) {
+      gettimeofday(&time, NULL);
+      timeS = time.tv_sec * 1000 + time.tv_usec / 1000;
+      if(ver == 0) {
+        result = s_simulate(regex, &infile);
+      } else if (ver == 1) {
+        result = p_simulate(regex, &infile);      
+      }
+      
+      //std::cout << *result << std::endl;
+      
+      gettimeofday(&time, NULL);
+      timeS = (time.tv_sec * 1000 + time.tv_usec / 1000) - timeS;
+      avarage += timeS;
+      infile.close();
+    }
+  }
+  avarage /= times;
+  std::cout << "Avarage time to compute " << regex << ", " << times << " times was: " << avarage << std::endl;
+  return avarage;
+}
+
 // A test, consisting of a list og testCases
 void newTest(char c) {
   std::list<testCase> cases;
@@ -112,6 +142,51 @@ void newTest(char c) {
   return;
 }
 
+std::string genEmail() {
+  std::string ret = "";
+  int n = (rand() % 254) + 1;
+  for(int i = 0; i < n; i++) {
+    ret += ('a' + (rand() % 24));
+  }
+  ret += "@";
+  int choice = rand() % 2;
+  if(choice) {
+    ret += '[';
+    ret += std::to_string(rand() % 3) + std::to_string(rand() % 10) + std::to_string(rand() % 10);
+    ret += '.';
+    ret += std::to_string(rand() % 3) + std::to_string(rand() % 10) + std::to_string(rand() % 10);
+    ret += '.';
+    ret += std::to_string(rand() % 3) + std::to_string(rand() % 10) + std::to_string(rand() % 10);
+    ret += '.';
+    ret += std::to_string(rand() % 3) + std::to_string(rand() % 10) + std::to_string(rand() % 10);
+    ret += ']';
+  } else {
+    n = (rand() % 254) + 1;
+    for(int i = 0; i < n; i++) {
+      ret += ('a' + (rand() % 24));
+    }
+    ret += ".dk";
+  }
+  return ret;
+}
+
+void genFile2(int nr, size_t size, std::string file) {
+  std::ofstream myfile;
+  myfile.open(file);
+  if(nr == 0) {
+    std::string tmp = "";
+    for(size_t i = 0; i < size; i++) {
+      tmp += ('a' + (rand() % 24));
+    }
+    myfile << tmp;
+  } else if (nr == 1) {
+    for(size_t i = 0; i < size; i++) {
+      myfile << genEmail() << " ";
+    }
+  }
+  myfile.close();
+}
+
 void genFile(std::string language, size_t size) {
   std::ofstream myfile;
   myfile.open("test_input");
@@ -167,7 +242,7 @@ int main() {
       }
       if(c[0] == '3') {
         std::cout << "Generating test data\n";
-        genFile("abcdefghijklmnopqrstuvwxyz", 3000000);
+        genFile("abcdefghijklmnopqrstuvwxyz", 30000000);
       }
       std::cout << "Compare implementations? y/n\n";
       std::cin.getline(c, 10);
@@ -185,7 +260,7 @@ int main() {
         gettimeofday(&time, NULL);
         timeP = time.tv_sec * 1000 + time.tv_usec / 1000;
         
-        result = p_simulate("([a-z]([a-c]+|[^x-z])?)*", &infile);
+        result = p_simulate("([a-z]([a-c]+|[^x-z])?)*|([a-z]([a-c]+|[^x-z])?)*", &infile);
         
         gettimeofday(&time, NULL);
         timeP = (time.tv_sec * 1000 + time.tv_usec / 1000) - timeP;
@@ -211,6 +286,29 @@ int main() {
         if(timeS != 0) {
           std::cout << "Time for simple: " <<  timeS << "ms\n";          
         }
+    } else if(c[0] == 'g') {
+    
+    std::string filename = "myTest";
+    for(int i = 1; i < 11; i++) {
+      genFile2(0, i*20000, filename);
+
+      std::ifstream in(filename, std::ios::binary | std::ios::ate);
+      std::cout << "Number of Bytes: " << in.tellg() << std::endl;
+      in.close();
+
+      
+      //genFile2(0, 1000000, "myTest");
+
+      std::string ip = "\\[[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\]";
+      std::string email = "([a-z]+@(" + ip + " |[a-z]+\\.[a-z]+ ))*";
+      std::string ourTest = "([a-z]([a-c]+|[^x-z])?)*";
+      std::string ourTest2 = ourTest + "|" + ourTest;
+      //performanceTest(ourTest, 10, "myTest", 1);
+      //std::cout << "first test done\n";
+      //performanceTest(ourTest, 1, "myTest", 0);
+      performanceTest(ourTest2, 10, filename, 1);
+      performanceTest(ourTest2, 10, filename, 0);
+    }
     } else {
       newTest(c[1]);
     }
