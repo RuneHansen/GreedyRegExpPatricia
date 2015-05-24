@@ -48,8 +48,10 @@ int performanceTest(std::string regex, int times, std::string file, int ver) {
       timeS = time.tv_sec * 1000 + time.tv_usec / 1000;
       if(ver == 0) {
         result = s_simulate(regex, &infile);
+        delete result;
       } else if (ver == 1) {
         result = p_simulate(regex, &infile);      
+        delete result;
       }
       
       //std::cout << *result << std::endl;
@@ -290,7 +292,7 @@ int main() {
     
     std::string filename = "myTest";
     for(int i = 1; i < 11; i++) {
-      genFile2(0, i*20000, filename);
+      genFile2(0, i*200000, filename);
 
       std::ifstream in(filename, std::ios::binary | std::ios::ate);
       std::cout << "Number of Bytes: " << in.tellg() << std::endl;
@@ -306,8 +308,8 @@ int main() {
       //performanceTest(ourTest, 10, "myTest", 1);
       //std::cout << "first test done\n";
       //performanceTest(ourTest, 1, "myTest", 0);
-      performanceTest(ourTest2, 10, filename, 1);
-      performanceTest(ourTest2, 10, filename, 0);
+      performanceTest(ourTest, 10, filename, 1);
+      //performanceTest(ourTest2, 10, filename, 0);
     }
     } else {
       newTest(c[1]);

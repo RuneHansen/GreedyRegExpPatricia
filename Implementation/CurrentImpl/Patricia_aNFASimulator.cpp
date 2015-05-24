@@ -296,6 +296,7 @@ void update(std::list<activeStatePath>* S, const int numStates, std::list<transi
     }
     
     free(found);
+    S->clear();
     *S = newS;
 }
 
@@ -309,6 +310,20 @@ void freePat(patNode *node) {
   }
   delete node->bitstring;
   free(node);
+}
+
+void freeNewM(std::list<transitionPath>** newM, int numStates, int aSize) {
+  for(int i = 0; i < aSize; i++) {
+    for(int j = 0; j < numStates; j++) {
+      /*for (std::list<transitionPath>::iterator it=newM[i*numStates + j]->begin(); it != newM[i*numStates + j]->end(); ++it) {
+        transitionPath tmp= *it;
+        free(&tmp);
+      }*/
+      newM[i*numStates + j]->clear();
+      delete newM[i*numStates + j];
+    }
+  }
+  delete newM;
 }
 
 //Compares two nodes strings, used for sorting.
@@ -451,11 +466,15 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   
   //Freeing memory
   //std::cout << "Freeing memory\n";
-  //free(S);
-  //delete S;
+
   freeANFA(initialState, numStates);
   freeMatrix(allM, numStates, alphabet.size());
   freePat(root);
+  freeNewM(newM, numStates, alphabet.size());
+  
+  S->clear();
+  delete S;
+  
   //std::cout << "Done\n";
   return output;
 }
