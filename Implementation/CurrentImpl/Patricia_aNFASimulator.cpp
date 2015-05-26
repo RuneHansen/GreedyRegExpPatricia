@@ -478,3 +478,150 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   //std::cout << "Done\n";
   return output;
 }
+
+void update2(std::list<activeStatePath2>* S, const int numStates, std::list<transitionPath>** m) {
+    std::list<activeStatePath2> newS; // = new std::list<activeStatePath>();
+    // Contains the currently found new states
+    int *found = calloc(numStates, sizeof(int));
+    
+    for (std::list<activeStatePath2>::iterator it=S->begin(); it != S->end(); ++it) {
+      for(std::list<transitionPath>::iterator pf=m[it->nr]->begin(); pf != m[it->nr]->end(); ++pf) {
+        if(!found[pf->nr]) {
+            activeStatePath2* tmp = (activeStatePath2*) malloc(sizeof(activeStatePath2));
+            tmp->nr = pf->nr;
+            tmp->string = new std::string();
+            *tmp->string = *(it->string) + *(pf->string);
+            found[pf->nr] = 1;
+            newS.push_back(*tmp);
+        }
+      }
+      delete it->string;
+      //free(&it);
+    }
+    
+    free(found);
+    S->clear();
+    *S = newS;
+}
+
+bool compare_activeStatePath2(const activeStatePath2& s1, const activeStatePath2& s2) {
+  return *s1.string < *s2.string;
+}
+
+std::string* s2_simulate(std::string regEx, std::istream* input) {
+
+  // Parse the string-form regular expression, to the regular expression type BitC_Regex
+  BitC_Regex *regex = NULL;
+  BitC_YY_scan_string(regEx.c_str());
+  BitC_YYparse(&regex);
+  BitC_YYlex_destroy();
+
+  // Generate the aNFA nodes with connections
+  std::string alphabet;// will contain one exactly one occurense, of each different literal,
+                       // that appear in the regular expression.
+  aNFAnode* initialState = aNFAnodeConstructor();
+  aNFAnode* finishingState = aNFAnodeConstructor();
+  aNFAgen(regex, initialState, finishingState, &alphabet);
+
+  
+  // Add state numbers. numStates is the total number of states.
+  int numStates = addNr(initialState, 0);
+
+  // Create transition matrices. allM contains all the transition matrices.
+  std::string** allM = (std::string**) malloc(numStates * numStates *
+                             alphabet.size() * sizeof(std::string*));
+  for(size_t i = 0; i < alphabet.size(); i++) {
+    buildMatrix(initialState, numStates, alphabet.at(i), allM + (i*numStates*numStates));
+  }
+  
+  //printMatrix(allM, numStates);
+  
+  // Create newM
+  std::list<transitionPath>** newM = calloc(numStates*alphabet.size(), sizeof(std::list<transitionPath>*));
+  buildNewM(allM, newM, numStates, alphabet.size());
+  
+  //printNewM(newM, numStates, alphabet.size());
+
+  // Create S for the initial state
+  // S is a list containing a patnode for each active state q
+  // representing the lexicographically least path through the aNFA to 
+  // state q, using the input read so far.
+
+
+
+  std::list<activeStatePath2>* S = new std::list<activeStatePath2>();
+  for(int i = 0; i < numStates; i++) {
+    std::string tmp = createString(initialState, i, '\0');
+    if(tmp != "na") {
+      activeStatePath2* newActiveStatePath = malloc(sizeof(activeStatePath2));
+      newActiveStatePath->nr = i;
+      newActiveStatePath->string = new std::string();
+      *newActiveStatePath->string = tmp;
+      S->push_back(*newActiveStatePath);
+    }
+  }
+  S->sort(compare_activeStatePath2);
+
+  // Print simulation arguments
+  /*std::cout << "Patricia aNFA simulation:\n";
+  std::cout << "regex = " << regEx << "\n"; */
+  
+  // Run simulation
+  char curChar;
+  int lSize = alphabet.size();
+  int charNr;// placement in alphabet and allM
+  int i_nr = 0;
+  /*for (std::list<activeStatePath>::iterator it=S->begin(); it != S->end(); ++it) {
+      std::cout << "(s=" << getStringFromPat(it->node) << ",n=" << it->nr << ") ";
+  }
+  std::cout << "\n"; 
+  */
+  
+  std::string* output = new std::string("");
+
+  // Reading one character at a time, do update, cleanup and split
+  while(input->get(curChar)) {
+    for(int i = 0; i < lSize; i++) {
+      if(alphabet[i] == curChar) {
+        charNr = i;
+      }
+    }
+    update2(S, numStates, newM + (charNr*numStates));
+    
+    /*
+    for (std::list<activeStatePath>::iterator it=S->begin(); it != S->end(); ++it) {
+      std::cout << "(s=" << getStringFromPat(it->node) << ",n=" << it->nr << ") ";
+    }
+    std::cout << "\n";
+    */
+    i_nr++;
+  }
+
+  //Find last part of output, if it does not exist, return "na"
+  std::string check = "na";
+  for (std::list<activeStatePath2>::iterator it=S->begin(); it != S->end(); ++it) {
+    if(it->nr == finishingState->nr) {
+      check = *it->string;
+    }
+    delete it->string;
+  } 
+  if(check == "na") {
+    *output = "na";
+  } else {
+    *output += check;
+  }
+  //std::cout << "Total duration of triple loop " << (double) totalTime / 1000 << std::endl;
+  
+  //Freeing memory
+  //std::cout << "Freeing memory\n";
+
+  freeANFA(initialState, numStates);
+  freeMatrix(allM, numStates, alphabet.size());
+  freeNewM(newM, numStates, alphabet.size());
+  
+  S->clear();
+  delete S;
+  
+  //std::cout << "Done\n";
+  return output;
+}

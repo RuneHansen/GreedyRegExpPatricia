@@ -23,6 +23,11 @@ struct activeStatePath {
   patNode* node;
 };
 
+struct activeStatePath2 {
+  int nr;
+  std::string* string;
+};
+
 // Contains the transition path to nr by string
 struct transitionPath {
   int nr;
@@ -31,3 +36,5 @@ struct transitionPath {
 
 // regEx is the regular expression, test_input is the string we read
 std::string* p_simulate(std::string regEx, std::istream* input);
+
+std::string* s2_simulate(std::string regEx, std::istream* input);

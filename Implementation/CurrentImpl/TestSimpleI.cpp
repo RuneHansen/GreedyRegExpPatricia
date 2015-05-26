@@ -52,6 +52,9 @@ int performanceTest(std::string regex, int times, std::string file, int ver) {
       } else if (ver == 1) {
         result = p_simulate(regex, &infile);      
         delete result;
+      } else if (ver == 2) {
+        result = s2_simulate(regex, &infile);
+        delete result;
       }
       
       //std::cout << *result << std::endl;
@@ -129,6 +132,8 @@ void newTest(char c) {
     std::string tmp;
     if(c == 's')
       tmp = *s_simulate(it->regex, &is);
+    else if(c == 'v')
+      tmp = *s2_simulate(it->regex, &is);
     else
       tmp = *p_simulate(it->regex, &is);
     if (it->bitstring != tmp) {
@@ -223,6 +228,8 @@ int main() {
 
       if(c[1] == 's') {
         result = s_simulate(regEx, &is);
+      } else if (c[1] == 'v') {
+        result = s2_simulate(regEx, &is);
       } else {
         result = p_simulate(regEx, &is);
       }
@@ -292,7 +299,7 @@ int main() {
     
     std::string filename = "myTest";
     for(int i = 1; i < 11; i++) {
-      genFile2(0, i*200000, filename);
+      genFile2(0, i*2000, filename);
 
       std::ifstream in(filename, std::ios::binary | std::ios::ate);
       std::cout << "Number of Bytes: " << in.tellg() << std::endl;
@@ -308,7 +315,7 @@ int main() {
       //performanceTest(ourTest, 10, "myTest", 1);
       //std::cout << "first test done\n";
       //performanceTest(ourTest, 1, "myTest", 0);
-      performanceTest(ourTest, 10, filename, 1);
+      performanceTest(ourTest, 10, filename, 0);
       //performanceTest(ourTest2, 10, filename, 0);
     }
     } else {
