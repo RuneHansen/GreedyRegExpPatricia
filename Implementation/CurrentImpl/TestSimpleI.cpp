@@ -190,6 +190,36 @@ void genFile2(int nr, size_t size, std::string file) {
     for(size_t i = 0; i < size; i++) {
       myfile << genEmail() << " ";
     }
+  } else if(nr = 2) {
+    int cont0, cont1, cont2, cont3, cont4;
+    
+    for(int i = 0; i < size; i++) {
+      cont0 = 1;
+      while(cont0) {
+        cont1 = 1;
+        while(cont1) {
+          cont2 = 1;
+          while(cont2) {
+            cont3 = 1;
+            while(cont3) {
+              cont4 = 1;
+              while(cont4) {
+                myfile << 'a';
+                cont4 = rand() % 2;
+              }
+              myfile << 'b';
+              cont3 = rand() % 2;
+            }
+            myfile << 'c';
+            cont2 = rand() % 2;
+          }
+          myfile << 'd';
+          cont1 = rand() % 2;
+        }
+        myfile << 'e';
+        cont0 = rand() % 2;
+      }
+    }
   }
   myfile.close();
 }
@@ -298,8 +328,8 @@ int main() {
     } else if(c[0] == 'g') {
     
     std::string filename = "myTest";
-    for(int i = 1; i < 11; i++) {
-      genFile2(0, i*2000, filename);
+    for(int i = 1; i < 5; i++) {
+      genFile2(2, i*1000, filename);
 
       std::ifstream in(filename, std::ios::binary | std::ios::ate);
       std::cout << "Number of Bytes: " << in.tellg() << std::endl;
@@ -312,10 +342,11 @@ int main() {
       std::string email = "([a-z]+@(" + ip + " |[a-z]+\\.[a-z]+ ))*";
       std::string ourTest = "([a-z]([a-c]+|[^x-z])?)*";
       std::string ourTest2 = ourTest + "|" + ourTest;
+      std::string starHeight5 = "((((((((a+)b)+)c)+)d)+)e)+";
       //performanceTest(ourTest, 10, "myTest", 1);
       //std::cout << "first test done\n";
       //performanceTest(ourTest, 1, "myTest", 0);
-      performanceTest(ourTest, 10, filename, 0);
+      performanceTest(starHeight5, 10, filename, 0);
       //performanceTest(ourTest2, 10, filename, 0);
     }
     } else {
