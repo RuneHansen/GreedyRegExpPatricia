@@ -65,6 +65,60 @@ void update(std::string** S, const int numStates, std::string** m) {
   free(newS);
 }
 
+
+// Find longest prefix common to all strings in the list,
+// remove the prefix from all strings in the list and return the prefix.
+std::string split(std::string** S, int numStates) {
+
+  // The index of the characters we are comparing
+  int cInd = 0;
+
+  //How many letters we should compare at most, just has to be equal to or longer than the shortest string
+  int stringLength = S[0]->size();
+
+  //Whether we should break the outer loop.
+  int success = 1;
+
+  if(S[0]->size() == cInd) {
+    return "";
+  }
+  
+  char tmp = S[0]->at(0);
+  for (int c = 0; c < stringLength; c++) { // Each char
+    for (int i = 0; i < numStates; i++) { // in each string
+      // Break at the end of the longest common prefix and/or the shortest string.
+      if (S[i]->size() == cInd || S[i]->at(cInd) != tmp) {
+        success = 0;
+        break;
+      }
+    }
+
+    // End at the end of the longest common prefix
+    if (!success) {
+      break;
+    }
+
+    cInd++;
+    tmp = S[0]->at(cInd);
+  }
+
+  // cInd is now the index of the final character in the longest common prefix
+  // Extract longest common prefix
+  std::string prefix;
+  if (cInd < 1) {
+    prefix = std::string("");
+  } else {
+    prefix = S[0]->substr(0, cInd);
+  }
+  
+  for (int i = 0; i < numStates; i++){
+    S[i]->erase(0, cInd);
+  }
+
+  // Return the longest common prefix
+  return prefix;
+}
+
 // Run aNFA simulation
 // Takes regEx = a regular expression, and test_input = an input string.
 // Returns the lexicographically least bitstring,
@@ -112,6 +166,8 @@ std::string* s_simulate(std::string regEx, std::istream* input) {
   char curChar;
   int lSize = language.size();
   int charNr;// placement in language and allM
+  std::string check = "";
+  
   while(input->get(curChar)) {
     for(int i = 0; i < lSize; i++) {
       if(language[i] == curChar) {
@@ -119,12 +175,20 @@ std::string* s_simulate(std::string regEx, std::istream* input) {
       }
     }
     update(S, numStates, allM + (charNr*numStates*numStates));
+    check += split(S, numStates);
+    
   }
 
 
   std::string* output = new std::string();
-  *output = *S[finishingState->nr];
+  if(*S[finishingState->nr] == "na") {
+    *output = "na";
+  } else {
+    *output = check + *S[finishingState->nr];
+  }
 
+  
+  
   // Free memory
   for(int i = 0; i < numStates; i++) {
     delete S[i];
@@ -137,56 +201,3 @@ std::string* s_simulate(std::string regEx, std::istream* input) {
 }
 
 
-// Find longest prefix common to all strings in the list,
-// remove the prefix from all strings in the list and return the prefix.
-std::string split(std::string** S, int numStates) {
-
-  // The index of the characters we are comparing
-  int cInd = 0;
-
-  //How many letters we should compare at most, just has to be longer than the shortest string
-  int stringLength = S[0]->size();
-
-  //Whether we should break the outer loop.
-  int success = 1;
-
-  char tmp = S[0]->at(0);
-  for (int c = 0; c < stringLength; c++) { // Each char
-    for (int i = 0; i < numStates; i++) { // in each string
-      // Break at the end of the longest common prefix and/or the shortest string.
-      if (S[i]->at(cInd) != '\0' && S[i]->at(cInd) != tmp) {
-        success = 0;
-        break;
-      }
-    }
-
-    // End at the end of the longest common prefix
-    if (!success) {
-      break;
-    }
-
-    cInd++;
-    tmp = S[0]->at(cInd);
-  }
-
-  // cInd is now the index of the final character in the longest common prefix
-  // Extract longest common prefix
-  std::string prefix;
-  if (cInd < 1) {
-    prefix = std::string("");
-  } else {
-    char* ttmp = (char*)malloc((cInd + 1) * sizeof(char));
-    S[0]->copy(ttmp, cInd, 0);
-    ttmp[cInd] = '\0';
-    prefix = std::string(ttmp);
-
-    // Free memory
-    free(ttmp);
-  }
-  for (int i = 0; i < numStates; i++){
-    S[i]->erase(0, cInd);
-  }
-
-  // Return the longest common prefix
-  return prefix;
-}

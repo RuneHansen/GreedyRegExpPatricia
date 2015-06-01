@@ -329,7 +329,7 @@ int main() {
     
     std::string filename = "myTest";
     for(int i = 1; i < 5; i++) {
-      genFile2(2, i*1000, filename);
+      genFile2(0, i*20000, filename);
 
       std::ifstream in(filename, std::ios::binary | std::ios::ate);
       std::cout << "Number of Bytes: " << in.tellg() << std::endl;
@@ -345,9 +345,9 @@ int main() {
       std::string starHeight5 = "((((((((a+)b)+)c)+)d)+)e)+";
       //performanceTest(ourTest, 10, "myTest", 1);
       //std::cout << "first test done\n";
-      //performanceTest(ourTest, 1, "myTest", 0);
-      performanceTest(starHeight5, 10, filename, 0);
-      //performanceTest(ourTest2, 10, filename, 0);
+      performanceTest(ourTest, 10, filename, 0);
+      performanceTest(ourTest, 10, filename, 1);
+      performanceTest(ourTest, 10, filename, 2);
     }
     } else {
       newTest(c[1]);

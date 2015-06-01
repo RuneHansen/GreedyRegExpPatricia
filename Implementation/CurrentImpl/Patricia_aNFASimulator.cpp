@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include "tranMatrix.h"
 
+#define asd
 
 int cstringTime = 0;
 int insertPatTime = 0;
@@ -416,6 +417,12 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   
   std::string* output = new std::string("");
 
+
+  #ifdef TESTTIME
+  long tClean = 0, tUpdate = 0, tGet = 0, ttmp;
+  struct timeval time;
+  #endif
+  
   // Reading one character at a time, do update, cleanup and split
   while(input->get(curChar)) {
     /*if(S->size() == 0) {
@@ -428,10 +435,30 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
         charNr = i;
       }
     }
+    #ifdef TESTTIME
+    gettimeofday(&time, NULL);
+    ttmp = time.tv_sec * 1000 + time.tv_usec / 1000;
+    #endif
+    
     update(S, numStates, newM + (charNr*numStates));
 
+    #ifdef TESTTIME
+    gettimeofday(&time, NULL);
+    ttmp = (time.tv_sec * 1000 + time.tv_usec / 1000) - ttmp;
+    tUpdate += ttmp;
+    
+    gettimeofday(&time, NULL);
+    ttmp = time.tv_sec * 1000 + time.tv_usec / 1000;
+    #endif
+    
     cleanUp(root);
-
+    
+    #ifdef TESTTIME
+    gettimeofday(&time, NULL);
+    ttmp = (time.tv_sec * 1000 + time.tv_usec / 1000) - ttmp;
+    tClean += ttmp;
+    #endif
+    
     *output += split(&root);
     
     /*
@@ -443,6 +470,11 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     i_nr++;
   }
 
+  #ifdef TESTTIME
+  gettimeofday(&time, NULL);
+  ttmp = time.tv_sec * 1000 + time.tv_usec / 1000;
+  #endif
+  
   //Find last part of output, if it does not exist, return "na"
   std::string check = "na";
   for (std::list<activeStatePath>::iterator it=S->begin(); it != S->end(); ++it) {
@@ -462,6 +494,14 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   } else {
     *output += check;
   }
+  
+  #ifdef TESTTIME
+  gettimeofday(&time, NULL);
+  ttmp = (time.tv_sec * 1000 + time.tv_usec / 1000) - ttmp;
+  tGet += ttmp;
+  
+  std::cout << "Time for update: " << tUpdate << ", time for clean: " << tClean << ", time for get: " << tGet << std::endl;
+  #endif
   //std::cout << "Total duration of triple loop " << (double) totalTime / 1000 << std::endl;
   
   //Freeing memory
@@ -506,6 +546,38 @@ void update2(std::list<activeStatePath2>* S, const int numStates, std::list<tran
 
 bool compare_activeStatePath2(const activeStatePath2& s1, const activeStatePath2& s2) {
   return *s1.string < *s2.string;
+}
+
+std::string split2(std::list<activeStatePath2>* S) {
+  int cn = 0;
+  int success = 1;
+  while(success) {
+    if(S->front().string->size() == cn) {
+      success = 0;
+      break;
+    }
+    char tmp = S->front().string->at(cn);
+    for (std::list<activeStatePath2>::iterator it=S->begin(); it != S->end(); ++it) {
+      if(it->string->size() == cn || it->string->at(cn) != tmp) {
+        success = 0;
+        cn--;
+        break;
+      }
+    }
+    cn++;
+  }
+  if(cn == 0) {
+    return "";
+  }
+  
+  std::string prefix = S->front().string->substr(0, cn);
+
+  for (std::list<activeStatePath2>::iterator it=S->begin(); it != S->end(); ++it) {
+
+    it->string->erase(it->string->begin(), it->string->begin() + cn);
+
+  }
+  return prefix;
 }
 
 std::string* s2_simulate(std::string regEx, std::istream* input) {
@@ -594,6 +666,8 @@ std::string* s2_simulate(std::string regEx, std::istream* input) {
     }
     std::cout << "\n";
     */
+    *output += split2(S);
+
     i_nr++;
   }
 
