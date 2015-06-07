@@ -74,6 +74,7 @@ std::string split(std::string** S, int numStates) {
   int cInd = 0;
 
   //How many letters we should compare at most, just has to be equal to or longer than the shortest string
+
   int stringLength = S[0]->size();
 
   //Whether we should break the outer loop.
@@ -83,11 +84,16 @@ std::string split(std::string** S, int numStates) {
     return "";
   }
   
-  char tmp = S[0]->at(0);
-  for (int c = 0; c < stringLength; c++) { // Each char
+  char tmp = "b";
+  while(success) { // Each char
     for (int i = 0; i < numStates; i++) { // in each string
       // Break at the end of the longest common prefix and/or the shortest string.
-      if (S[i]->size() == cInd || S[i]->at(cInd) != tmp) {
+      if(*S[i] != "na" && tmp == "b") {
+        std::cout << *S[i] << std::endl;
+        tmp = S[i]->at(cInd);
+      }      
+      if (*S[i] != "na" && ( S[i]->size() == cInd || S[i]->at(cInd) != tmp)) {
+        std::cout << "tmp : " << tmp << ", S[i]: " << S[i]->at(cInd) << std::endl;
         success = 0;
         break;
       }
@@ -99,7 +105,7 @@ std::string split(std::string** S, int numStates) {
     }
 
     cInd++;
-    tmp = S[0]->at(cInd);
+    tmp = "b";
   }
 
   // cInd is now the index of the final character in the longest common prefix
@@ -108,11 +114,14 @@ std::string split(std::string** S, int numStates) {
   if (cInd < 1) {
     prefix = std::string("");
   } else {
+    std::cout << "cInd > 1\n";
     prefix = S[0]->substr(0, cInd);
   }
   
   for (int i = 0; i < numStates; i++){
-    S[i]->erase(0, cInd);
+    if(*S[i] != "na") {
+      S[i]->erase(0, cInd);
+    }
   }
 
   // Return the longest common prefix
@@ -181,7 +190,7 @@ std::string* s_simulate(std::string regEx, std::istream* input) {
 
 
   std::string* output = new std::string();
-  if(*S[finishingState->nr] == "na") {
+  if(S[finishingState->nr] == NULL) {
     *output = "na";
   } else {
     *output = check + *S[finishingState->nr];

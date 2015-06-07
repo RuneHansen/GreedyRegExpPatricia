@@ -416,12 +416,6 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   */
   
   std::string* output = new std::string("");
-
-
-  #ifdef TESTTIME
-  long tClean = 0, tUpdate = 0, tGet = 0, ttmp;
-  struct timeval time;
-  #endif
   
   // Reading one character at a time, do update, cleanup and split
   while(input->get(curChar)) {
@@ -435,29 +429,10 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
         charNr = i;
       }
     }
-    #ifdef TESTTIME
-    gettimeofday(&time, NULL);
-    ttmp = time.tv_sec * 1000 + time.tv_usec / 1000;
-    #endif
     
     update(S, numStates, newM + (charNr*numStates));
-
-    #ifdef TESTTIME
-    gettimeofday(&time, NULL);
-    ttmp = (time.tv_sec * 1000 + time.tv_usec / 1000) - ttmp;
-    tUpdate += ttmp;
-    
-    gettimeofday(&time, NULL);
-    ttmp = time.tv_sec * 1000 + time.tv_usec / 1000;
-    #endif
     
     cleanUp(root);
-    
-    #ifdef TESTTIME
-    gettimeofday(&time, NULL);
-    ttmp = (time.tv_sec * 1000 + time.tv_usec / 1000) - ttmp;
-    tClean += ttmp;
-    #endif
     
     *output += split(&root);
     
@@ -469,11 +444,6 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     */
     i_nr++;
   }
-
-  #ifdef TESTTIME
-  gettimeofday(&time, NULL);
-  ttmp = time.tv_sec * 1000 + time.tv_usec / 1000;
-  #endif
   
   //Find last part of output, if it does not exist, return "na"
   std::string check = "na";
@@ -495,13 +465,6 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
     *output += check;
   }
   
-  #ifdef TESTTIME
-  gettimeofday(&time, NULL);
-  ttmp = (time.tv_sec * 1000 + time.tv_usec / 1000) - ttmp;
-  tGet += ttmp;
-  
-  std::cout << "Time for update: " << tUpdate << ", time for clean: " << tClean << ", time for get: " << tGet << std::endl;
-  #endif
   //std::cout << "Total duration of triple loop " << (double) totalTime / 1000 << std::endl;
   
   //Freeing memory
@@ -519,6 +482,7 @@ std::string* p_simulate(std::string regEx, std::istream* input) {
   return output;
 }
 
+// Update function for the simple list implementation
 void update2(std::list<activeStatePath2>* S, const int numStates, std::list<transitionPath>** m) {
     std::list<activeStatePath2> newS; // = new std::list<activeStatePath>();
     // Contains the currently found new states
@@ -535,6 +499,7 @@ void update2(std::list<activeStatePath2>* S, const int numStates, std::list<tran
             newS.push_back(*tmp);
         }
       }
+      //it->string->clear();
       delete it->string;
       //free(&it);
     }
@@ -548,9 +513,11 @@ bool compare_activeStatePath2(const activeStatePath2& s1, const activeStatePath2
   return *s1.string < *s2.string;
 }
 
+//Split function for the simple list implementation
 std::string split2(std::list<activeStatePath2>* S) {
   int cn = 0;
   int success = 1;
+  //Check one letter at a time, if any string is done stop.
   while(success) {
     if(S->front().string->size() == cn) {
       success = 0;
@@ -566,6 +533,8 @@ std::string split2(std::list<activeStatePath2>* S) {
     }
     cn++;
   }
+  
+  //cn has the number of equal elements, copy these out and return.
   if(cn == 0) {
     return "";
   }
@@ -580,6 +549,7 @@ std::string split2(std::list<activeStatePath2>* S) {
   return prefix;
 }
 
+//The simple list simulation
 std::string* s2_simulate(std::string regEx, std::istream* input) {
 
   // Parse the string-form regular expression, to the regular expression type BitC_Regex
@@ -615,11 +585,9 @@ std::string* s2_simulate(std::string regEx, std::istream* input) {
   //printNewM(newM, numStates, alphabet.size());
 
   // Create S for the initial state
-  // S is a list containing a patnode for each active state q
+  // S is a list containing a string for each active state q
   // representing the lexicographically least path through the aNFA to 
   // state q, using the input read so far.
-
-
 
   std::list<activeStatePath2>* S = new std::list<activeStatePath2>();
   for(int i = 0; i < numStates; i++) {
@@ -635,8 +603,7 @@ std::string* s2_simulate(std::string regEx, std::istream* input) {
   S->sort(compare_activeStatePath2);
 
   // Print simulation arguments
-  /*std::cout << "Patricia aNFA simulation:\n";
-  std::cout << "regex = " << regEx << "\n"; */
+  //std::cout << "regex = " << regEx << "\n"; 
   
   // Run simulation
   char curChar;

@@ -35,6 +35,8 @@ testCase fillTC(std::string r, std::string i, std::string b) {
   return ret;
 }
 
+//Runs a simulation "times" times, on "regex" with input from "file" and using
+// the version in "ver", ver 0 = array, 1 = patricia, 2 = simple list
 int performanceTest(std::string regex, int times, std::string file, int ver) {
   long avarage = 0;
   
@@ -149,6 +151,7 @@ void newTest(char c) {
   return;
 }
 
+//Used to generate a random email
 std::string genEmail() {
   std::string ret = "";
   int n = (rand() % 254) + 1;
@@ -177,6 +180,9 @@ std::string genEmail() {
   return ret;
 }
 
+//Generate a random file input, first argument is 0 for random alphabet characters,
+// 1 for emails, 2 for the starheight 5 test. Size determines the size of the input
+// generated, and file is the file location.
 void genFile2(int nr, size_t size, std::string file) {
   std::ofstream myfile;
   myfile.open(file);
@@ -268,7 +274,7 @@ int main() {
 
       
       std::cout << "Result: " << *result << ", time: " << ((double) timeP / 1000) << std::endl;
-    } else if (c[0] == 'p') {
+    } else if (c[0] == 'g') {
       std::cout << "Input size: 3k(1), 30k(2), 300k(3)\n";
       std::cin.getline(c, 10);
       if(c[0] == '1') {
@@ -325,11 +331,42 @@ int main() {
         if(timeS != 0) {
           std::cout << "Time for simple: " <<  timeS << "ms\n";          
         }
-    } else if(c[0] == 'g') {
+    } else if(c[0] == 'p') {
+    
+    std::cout << "Which test? 0: sh2 test, 1: alternative, 2: email, 3: SH5 test(default)\n";
+    std::cin.getline(c, 10);
+    char test = c[0];
+    std::cout << "~Input size(bytes)? (too high input might cause memory swapping)\n";
+    std::cin.getline(c, 10);
+    
+    std::string ip = "\\[[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\]";
+    std::string email = "([a-z]+@(" + ip + " |[a-z]+\\.[a-z]+ ))*";
+    std::string ourTest = "([a-z]([a-c]+|[^x-z])?)*";
+    std::string ourTest2 = ourTest + "|" + ourTest;
+    std::string starHeight5 = "((((((((a+)b)+)c)+)d)+)e)+";
+    std::string testCase;
+    int sizeDiv, genNr;
+    if(test == '0') {
+      testCase = ourTest;
+      sizeDiv = 1;
+      genNr = 0;
+    } else if (test == '1') {
+      testCase = ourTest2;
+      sizeDiv = 1;
+      genNr = 0;
+    } else if(test == '2') {
+      testCase = email;
+      sizeDiv = 205;
+      genNr = 1;
+    } else {
+      testCase = starHeight5;
+      sizeDiv = 61;
+      genNr = 2;
+    }
     
     std::string filename = "myTest";
-    for(int i = 1; i < 5; i++) {
-      genFile2(0, i*20000, filename);
+    for(int i = 1; i < 2; i++) {
+      genFile2(genNr, i*atoi(c) / sizeDiv, filename);
 
       std::ifstream in(filename, std::ios::binary | std::ios::ate);
       std::cout << "Number of Bytes: " << in.tellg() << std::endl;
@@ -338,16 +375,14 @@ int main() {
       
       //genFile2(0, 1000000, "myTest");
 
-      std::string ip = "\\[[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\.[0-2][0-9][0-9]\\]";
-      std::string email = "([a-z]+@(" + ip + " |[a-z]+\\.[a-z]+ ))*";
-      std::string ourTest = "([a-z]([a-c]+|[^x-z])?)*";
-      std::string ourTest2 = ourTest + "|" + ourTest;
-      std::string starHeight5 = "((((((((a+)b)+)c)+)d)+)e)+";
+
       //performanceTest(ourTest, 10, "myTest", 1);
       //std::cout << "first test done\n";
-      performanceTest(ourTest, 10, filename, 0);
-      performanceTest(ourTest, 10, filename, 1);
-      performanceTest(ourTest, 10, filename, 2);
+      std::cout << "Doing patricia performance\n";
+      performanceTest(testCase, 10, filename, 1);
+      std::cout << "Doing simple list performance\n";
+      performanceTest(testCase, 10, filename, 2);
+      //performanceTest(ourTest, 10, filename, 2);
     }
     } else {
       newTest(c[1]);
