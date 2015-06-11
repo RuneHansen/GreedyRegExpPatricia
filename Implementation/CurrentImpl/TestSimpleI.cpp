@@ -196,10 +196,10 @@ void genFile2(int nr, size_t size, std::string file) {
     for(size_t i = 0; i < size; i++) {
       myfile << genEmail() << " ";
     }
-  } else if(nr = 2) {
+  } else if(nr == 2) {
     int cont0, cont1, cont2, cont3, cont4;
     
-    for(int i = 0; i < size; i++) {
+    for(size_t i = 0; i < size; i++) {
       cont0 = 1;
       while(cont0) {
         cont1 = 1;
@@ -225,6 +225,18 @@ void genFile2(int nr, size_t size, std::string file) {
         myfile << 'e';
         cont0 = rand() % 2;
       }
+    }
+  } else if (nr == 3) {
+    for(size_t i = 0; i < size; i++) {
+      myfile << 'a';
+    }
+  } else if (nr == 4) {
+    for(size_t i = 0; i < size; i++) {
+      int as = rand() % 10 + 5;
+      for(int j = 0; j < as; j++) {
+        myfile << 'a';
+      }
+      myfile << 'b';
     }
   }
   myfile.close();
@@ -296,6 +308,7 @@ int main() {
       
       std::ifstream infile2;
       std::string* result;
+      result = result;
       long timeS = 0;
       long timeP = 0;
       struct timeval time;
@@ -344,6 +357,8 @@ int main() {
     std::string ourTest = "([a-z]([a-c]+|[^x-z])?)*";
     std::string ourTest2 = ourTest + "|" + ourTest;
     std::string starHeight5 = "((((((((a+)b)+)c)+)d)+)e)+";
+    std::string aStar = "a*";
+    std::string newSH2 = "(aa*b)*";
     std::string testCase;
     int sizeDiv, genNr;
     if(test == '0') {
@@ -358,14 +373,26 @@ int main() {
       testCase = email;
       sizeDiv = 205;
       genNr = 1;
-    } else {
+    } else if(test == '3') {
       testCase = starHeight5;
       sizeDiv = 61;
       genNr = 2;
+    } else if(test == '4') {
+      testCase = aStar;
+      sizeDiv = 1;
+      genNr = 3;
+    } else if(test == '5') {
+      testCase = newSH2;
+      sizeDiv = 10;
+      genNr = 4;
+    } else if(test == '6') {
+      testCase = aStar + "|" + aStar;
+      sizeDiv = 1;
+      genNr = 3;
     }
     
     std::string filename = "myTest";
-    for(int i = 1; i < 2; i++) {
+    for(int i = 1; i < 11; i++) {
       genFile2(genNr, i*atoi(c) / sizeDiv, filename);
 
       std::ifstream in(filename, std::ios::binary | std::ios::ate);

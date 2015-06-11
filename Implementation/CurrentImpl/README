@@ -1,0 +1,10 @@
+Type make to compile the code.
+Run code by ./TestSimpleI, follow onscreen instructions.
+
+Code for testing lies in TestSimpleI.cpp.
+The array implementation is in Simple_aNFASimulator.cpp/h.
+The PATRICIA implementation and list implementation is in Patricia_aNFASimulator.cpp/h.
+The preprocessing lies in aNFAgen.cpp and tranMatrix.cpp.
+
+parser.cpp/h/y, lex.cpp/h and regex.cpp/h were handed out to us by our supervisors,
+and contain code for handling the preprocessing.
